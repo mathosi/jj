@@ -1,0 +1,22 @@
+#' create data.frame of defined size with initial value in each cell
+#'
+#' Creates a data.frame of size `ncol` * `nrow` filled with `init`. `row.names` and `column.names` may also be specified.
+#'
+#' @param ncol number of columns
+#' @param nrow number of rows
+#' @param init value to put into every cell
+#' @param col.names colnames to set
+#' @param row.names rownames to set
+#' @keywords create data.frame, initialize data.frame, dummy data.frame
+#' @export
+#' @examples
+#' jj_initialize_df(ncol = 3, nrow = 4, init = 0, col.names = paste0("col", 1:3), row.names = paste0("row", 1:4))
+
+
+jj_initialize_df <- function(ncol, nrow, init=NA, col.names=NULL, ...){
+  init_df <- data.frame(matrix(init, ncol=ncol, nrow=nrow),stringsAsFactors = FALSE,...)
+  if(!is.null(col.names) & length(col.names) == ncol){
+    colnames(init_df) <- col.names
+  }
+  return(init_df)
+}
