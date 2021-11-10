@@ -37,6 +37,6 @@ jj_bind_features_with_dr_df(
 add values from a matrix/seurat object to data.frame containing metadata (dr_df)
 }
 \examples{
-jj_bind_features_with_dr_df(seurat_rna, assay='RNA', slot='data', cap_top='q95')
+jj_bind_features_with_dr_df(seurat_rna, assay='RNA', slot='data', features=c('CD4','CD8A'), cap_top='q95')
 }
 \keyword{cap}
