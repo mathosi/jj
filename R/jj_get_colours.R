@@ -27,7 +27,7 @@ jj_get_colours = function(annotation_vector=NULL, colour_csv, plot_colours=FALSE
     col_df$rownr = rep(1:rownr, each = colnr)[1:nrow(col_df)]
     col_df$colnr = rep(1:colnr, length.out = nrow(col_df))
     col_df$group_label = paste(col_df$group, col_df$colour, sep='\n')
-    print(ggplot2::gggplot(col_df, aes(x=colnr, y=rownr, fill = group)) + 
+    print(ggplot2::ggplot(col_df, aes(x=colnr, y=rownr, fill = group)) + 
             geom_tile() + scale_y_reverse() +
             scale_fill_manual(values= col_vec) + geom_text(aes(label=group_label)) + theme_void() + theme(legend.position = 'none'))
   }

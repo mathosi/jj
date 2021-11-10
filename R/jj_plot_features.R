@@ -25,11 +25,10 @@
 #' @param no_legend omit legend, default: FALSE
 #' @param use_facets either TRUE/FALSE: facet by the meta_feature, or a string specifying another meta_feature to facet by
 #' @param n_facet_rows number of rows for facetted plots
-#' @param cont_or_disc string indicating whether the the meta_feature is continuous 'c' or discrete 'd'. Try to set this manually, when the function fails. Otherwise, set to 'u'
+#' @param cont_or_disc string of length 1 or length n features indicating whether the features are continuous 'c' or discrete 'd'. Try to set this manually, when the function fails. Otherwise, set to 'a' to automatically determine c or d for each feature.
 #' @param pointdensity colour by pointdensity instead of feature using the ggpointdensity package
 #' @param order order points so that largest values are on top
 #' @param background_cells when using facets, include the cells not part of the facet as grey background 
-#' @param cont_or_disc_auto take the class from the df column to decide, and convert numeric to character if n_distinct < 11 visualize colours as ggplot heatmap, default: F
 #' @keywords plot
 #' @export
 #' @examples
@@ -39,6 +38,8 @@
 #' jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, use_facets='dish')
 #' jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, custom_colors=c(Apple='green', Banana='yellow'))
 #' jj_plot_features(seurat_rna, features=c('CD4', 'CD8A'), cap_top='q95', colorScale='viridis')
+#' df2 = data.frame(a=rnorm(100, 0, 5), b=rnorm(100, 0, 5), d=rbinom(100, 50, 0.3), e = sample(c('A','B'), 100, replace=T))
+#' jj_plot_features(reduction=df2, meta_features=c('d'), pt.size=4, use_facets = 'e', background_cells = T, order=T, custom_theme = theme_bw())
 
 jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, meta_features=NULL,
                          assay='RNA', slot='counts', 
@@ -47,7 +48,7 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
                          custom_colors=NULL, custom_theme=theme_minimal(), shape = 16, alpha=1,
                          pt.size=0.1, return_gg_object=FALSE, my_title=NULL, 
                          no_legend=F, n_facet_rows=NULL,
-                         cont_or_disc = 'u', cont_or_disc_auto = FALSE,
+                         cont_or_disc = 'a', 
                          pointdensity=F, order=FALSE, background_cells=FALSE){
 
   if(is.null(reduction)){
@@ -69,8 +70,8 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
     cont_or_disc <- rep(cont_or_disc, length(c(features, meta_features)))
   }else if(length(cont_or_disc) != length(c(features, meta_features))){
     stop('length of cont_or_disc must be either 1 or length(features, meta_features)')
-  }else if(any(!cont_or_disc %in% c('c', 'd', 'u'))){
-    stop('cont_or_disc can only be c, d, u: continuous, discrete, unknown')
+  }else if(any(!cont_or_disc %in% c('c', 'd', 'a'))){
+    stop('cont_or_disc can only be c, d, a: continuous, discrete, automatic')
   }
   
   gg_list <- list()
@@ -107,7 +108,8 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
         }
       }
     }
-    if(cont_or_disc_auto){
+    #try to find continous/discrete status for each variable automatically
+    if('a' %in% cont_or_disc){
       cont_or_disc = vector()
       #cont_or_disc = paste(ifelse(sapply(dr_df[, colnames(dr_df) %in% goi], class) == 'character', 'd', 'c'), collapse = '')
       for(i in goi){
@@ -163,7 +165,8 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
       }
     }
     
-    if((n_distinct(dr_df[, goi[i]]) < 30 & cont_or_disc[i] == 'u') | cont_or_disc[i] == 'd'){
+    if(cont_or_disc[i] == 'd'){
+      dr_df[, goi[i] ] = as.character(dr_df[, goi[i] ])
       if(!is.null(custom_colors)){
         if(is.null(names(custom_colors))){
           names(custom_colors) = levels(as.factor(dr_df[, goi[i] ]))
@@ -246,7 +249,7 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
     if(pointdensity){
       gg = gg + viridis::scale_color_viridis()
     }else if(!all(is.null(custom_colors))){ #& !n_distinct(dr_df[, goi[i]]) < 30){
-      if(length(custom_colors)==3 & cont_or_disc[i] %in% c('c', 'u')){
+      if(length(custom_colors)==3 & cont_or_disc[i] == 'c'){
         #use gradient if 3 colours are supplied
         mean_acc <- (max(dr_df[, goi[i]], na.rm = T) + min(dr_df[, goi[i]], na.rm = T)) / 2 #mean(dr_df[, goi[i]])
         gg <- gg + scale_color_gradient2(low = custom_colors[1], mid = custom_colors[2], high = custom_colors[3], midpoint = mean_acc)
@@ -258,7 +261,7 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
           scale_colour_manual(values = custom_colors) +#, breaks = names(custom_colors)) + 
           guides(colour = guide_legend(override.aes = list(size=5)))
       }
-    }else if(n_distinct(dr_df[, goi[i]]) < 30 & cont_or_disc[i] == 'u' | cont_or_disc[i] == 'd'){
+    }else if(cont_or_disc[i] == 'd'){
       #TODO: can error if discrete number of values is > =30
       #plot with discrete colors if less than 30 distinct values in variable (or if d is set (check for <60 distinct groups as sanity check))
       gg <- gg +

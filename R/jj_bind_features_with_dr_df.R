@@ -13,7 +13,7 @@
 #' @keywords cap
 #' @export
 #' @examples
-#' jj_bind_features_with_dr_df(seurat_rna, assay='RNA', slot='data', cap_top='q95')
+#' jj_bind_features_with_dr_df(seurat_rna, assay='RNA', slot='data', features=c('CD4','CD8A'), cap_top='q95')
 
 
 jj_bind_features_with_dr_df <- function(obj, assay='RNA', slot='counts', 

@@ -24,8 +24,7 @@ jj_plot_features(
   my_title = NULL,
   no_legend = F,
   n_facet_rows = NULL,
-  cont_or_disc = "u",
-  cont_or_disc_auto = FALSE,
+  cont_or_disc = "a",
   pointdensity = F,
   order = FALSE,
   background_cells = FALSE
@@ -70,9 +69,7 @@ jj_plot_features(
 
 \item{n_facet_rows}{number of rows for facetted plots}
 
-\item{cont_or_disc}{string indicating whether the the meta_feature is continuous 'c' or discrete 'd'. Try to set this manually, when the function fails. Otherwise, set to 'u'}
-
-\item{cont_or_disc_auto}{take the class from the df column to decide, and convert numeric to character if n_distinct < 11 visualize colours as ggplot heatmap, default: F}
+\item{cont_or_disc}{string of length 1 or length n features indicating whether the features are continuous 'c' or discrete 'd'. Try to set this manually, when the function fails. Otherwise, set to 'a' to automatically determine c or d for each feature.}
 
 \item{pointdensity}{colour by pointdensity instead of feature using the ggpointdensity package}
 
@@ -94,5 +91,7 @@ jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, use_facets=T
 jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, use_facets='dish')
 jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, custom_colors=c(Apple='green', Banana='yellow'))
 jj_plot_features(seurat_rna, features=c('CD4', 'CD8A'), cap_top='q95', colorScale='viridis')
+df2 = data.frame(a=rnorm(100, 0, 5), b=rnorm(100, 0, 5), d=rbinom(100, 50, 0.3), e = sample(c('A','B'), 100, replace=T))
+jj_plot_features(reduction=df2, meta_features=c('d'), pt.size=4, use_facets = 'e', background_cells = T, order=T, custom_theme = theme_bw())
 }
 \keyword{plot}
