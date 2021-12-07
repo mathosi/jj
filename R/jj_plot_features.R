@@ -29,6 +29,7 @@
 #' @param pointdensity colour by pointdensity instead of feature using the ggpointdensity package
 #' @param order order points so that largest values are on top
 #' @param background_cells when using facets, include the cells not part of the facet as grey background 
+#' @param label add boxes with labels to the discrete variable
 #' @keywords plot
 #' @export
 #' @examples
@@ -36,11 +37,12 @@
 #' jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, shape=15, my_title='fruits')
 #' jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, use_facets=T, n_facet_rows=2)
 #' jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, use_facets='dish')
-#' jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, custom_colors=c(Apple='green', Banana='yellow'))
+#' jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, custom_colors=c(Apple='green', Banana='yellow'), label=T)
 #' jj_plot_features(seurat_rna, features=c('CD4', 'CD8A'), cap_top='q95', colorScale='viridis')
 #' df2 = data.frame(a=rnorm(100, 0, 5), b=rnorm(100, 0, 5), d=rbinom(100, 50, 0.3), e = sample(c('A','B'), 100, replace=T))
 #' jj_plot_features(reduction=df2, meta_features=c('d'), pt.size=4, use_facets = 'e', background_cells = T, order=T, custom_theme = theme_bw())
-
+#'
+#'s
 jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, meta_features=NULL,
                          assay='RNA', slot='counts', 
                          colorScale=c('wbr', 'bry', 'seurat', 'viridis'),
@@ -49,7 +51,8 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
                          pt.size=0.1, return_gg_object=FALSE, my_title=NULL, 
                          no_legend=F, n_facet_rows=NULL,
                          cont_or_disc = 'a', 
-                         pointdensity=F, order=FALSE, background_cells=FALSE){
+                         pointdensity=F, order=FALSE, 
+                         background_cells=FALSE, label=FALSE){
 
   if(is.null(reduction)){
     stop('reduction must be either string specifying the reduction to use from seurat object or a dr_df data.frame')
@@ -315,6 +318,11 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
       }
     }
     
+    if(label & cont_or_disc[i] == 'd'){
+      gg$data[, goi[i]] = as.factor(gg$data[, goi[i]])
+      gg = .LabelClusters(gg, goi[i], box = T)
+    }
+    
     if(return_gg_object){
       gg_list[[i]] <- gg
     }else{
@@ -324,4 +332,156 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
   if(return_gg_object){
     return(gg_list)
   }
+}
+
+.LabelClusters = function(
+  #function from Seurat to label clusters
+  #additional check is done: if id is not factor, stop. In original function this results in another
+  #error message difficult to understand
+  plot,
+  id,
+  clusters = NULL,
+  labels = NULL,
+  split.by = NULL,
+  repel = TRUE,
+  box = FALSE,
+  geom = 'GeomPoint',
+  position = "median",
+  ...
+) {
+  #dr_df <- get_reduction_coords(seurat_atac, 'umap')
+  #dr_df$singler_label = as.factor(dr_df$singler_label)
+  #gg = ggplot(dr_df[1:10, ], aes(x=dim_1, y=dim_2)) + geom_point(aes(colour=singler_label))
+  #LabelClusters(gg, id='singler_label')
+  if(repel) library(ggrepel)
+  `%||%` <- function(lhs, rhs) {
+    if (!is.null(x = lhs)) {
+      return(lhs)
+    } else {
+      return(rhs)
+    }
+  }
+  
+  GetXYAesthetics <- function(plot, geom = 'GeomPoint', plot.first = TRUE) {
+    geoms <- sapply(
+      X = plot$layers,
+      FUN = function(layer) {
+        return(class(x = layer$geom)[1])
+      }
+    )
+    geoms <- which(x = geoms == geom)
+    if (length(x = geoms) == 0) {
+      stop("Cannot find a geom of class ", geom)
+    }
+    geoms <- min(geoms)
+    if (plot.first) {
+      x <- as.character(x = plot$mapping$x %||% plot$layers[[geoms]]$mapping$x)[2]
+      y <- as.character(x = plot$mapping$y %||% plot$layers[[geoms]]$mapping$y)[2]
+    } else {
+      x <- as.character(x = plot$layers[[geoms]]$mapping$x %||% plot$mapping$x)[2]
+      y <- as.character(x = plot$layers[[geoms]]$mapping$y %||% plot$mapping$y)[2]
+    }
+    return(list('x' = x, 'y' = y))
+  }
+  
+  xynames <- unlist(x = GetXYAesthetics(plot = plot, geom = geom), use.names = TRUE)
+  if (!id %in% colnames(x = plot$data)) {
+    stop("Cannot find variable ", id, " in plotting data")
+  }
+  if (!is.null(x = split.by) && !split.by %in% colnames(x = plot$data)) {
+    warning("Cannot find splitting variable ", id, " in plotting data")
+    split.by <- NULL
+  }
+  data <- plot$data[, c(xynames, id, split.by)]
+  
+  #own condition:
+  if(!is.factor(data[, id])){
+    stop('id needs to be a factor')
+  }
+  
+  possible.clusters <- as.character(x = na.omit(object = unique(x = data[, id])))
+  groups <- clusters %||% as.character(x = na.omit(object = unique(x = data[, id])))
+  if (any(!groups %in% possible.clusters)) {
+    stop("The following clusters were not found: ", paste(groups[!groups %in% possible.clusters], collapse = ","))
+  }
+  pb <- ggplot_build(plot = plot)
+  if (geom == 'GeomSpatial') {
+    data[, xynames["y"]] = max(data[, xynames["y"]]) - data[, xynames["y"]] + min(data[, xynames["y"]])
+    if (!pb$plot$plot_env$crop) {
+      y.transform <- c(0, nrow(x = pb$plot$plot_env$image)) - pb$layout$panel_params[[1]]$y.range
+      data[, xynames["y"]] <- data[, xynames["y"]] + sum(y.transform)
+    }
+  }
+  data <- cbind(data, color = pb$data[[1]][[1]])
+  labels.loc <- lapply(
+    X = groups,
+    FUN = function(group) {
+      data.use <- data[data[, id] == group, , drop = FALSE]
+      data.medians <- if (!is.null(x = split.by)) {
+        do.call(
+          what = 'rbind',
+          args = lapply(
+            X = unique(x = data.use[, split.by]),
+            FUN = function(split) {
+              medians <- apply(
+                X = data.use[data.use[, split.by] == split, xynames, drop = FALSE],
+                MARGIN = 2,
+                FUN = median,
+                na.rm = TRUE
+              )
+              medians <- as.data.frame(x = t(x = medians))
+              medians[, split.by] <- split
+              return(medians)
+            }
+          )
+        )
+      } else {
+        as.data.frame(x = t(x = apply(
+          X = data.use[, xynames, drop = FALSE],
+          MARGIN = 2,
+          FUN = median,
+          na.rm = TRUE
+        )))
+      }
+      data.medians[, id] <- group
+      data.medians$color <- data.use$color[1]
+      return(data.medians)
+    }
+  )
+  if (position == "nearest") {
+    labels.loc <- lapply(X = labels.loc, FUN = function(x) {
+      group.data <- data[as.character(x = data[, id]) == as.character(x[3]), ]
+      nearest.point <- nn2(data = group.data[, 1:2], query = as.matrix(x = x[c(1,2)]), k = 1)$nn.idx
+      x[1:2] <- group.data[nearest.point, 1:2]
+      return(x)
+    })
+  }
+  labels.loc <- do.call(what = 'rbind', args = labels.loc)
+  labels.loc[, id] <- factor(x = labels.loc[, id], levels = levels(data[, id]))
+  labels <- labels %||% groups
+  if (length(x = unique(x = labels.loc[, id])) != length(x = labels)) {
+    stop("Length of labels (", length(x = labels),  ") must be equal to the number of clusters being labeled (", length(x = labels.loc), ").")
+  }
+  names(x = labels) <- groups
+  for (group in groups) {
+    labels.loc[labels.loc[, id] == group, id] <- labels[group]
+  }
+  if (box) {
+    geom.use <- ifelse(test = repel, yes = geom_label_repel, no = geom_label)
+    plot <- plot + geom.use(
+      data = labels.loc,
+      mapping = aes_string(x = xynames['x'], y = xynames['y'], label = id, fill = id),
+      show.legend = FALSE,
+      ...
+    ) + scale_fill_manual(values = labels.loc$color[order(labels.loc[, id])])
+  } else {
+    geom.use <- ifelse(test = repel, yes = geom_text_repel, no = geom_text)
+    plot <- plot + geom.use(
+      data = labels.loc,
+      mapping = aes_string(x = xynames['x'], y = xynames['y'], label = id, colour=id),
+      show.legend = FALSE,
+      ...
+    )
+  }
+  return(plot)
 }

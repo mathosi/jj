@@ -27,7 +27,8 @@ jj_plot_features(
   cont_or_disc = "a",
   pointdensity = F,
   order = FALSE,
-  background_cells = FALSE
+  background_cells = FALSE,
+  label = FALSE
 )
 }
 \arguments{
@@ -76,6 +77,8 @@ jj_plot_features(
 \item{order}{order points so that largest values are on top}
 
 \item{background_cells}{when using facets, include the cells not part of the facet as grey background}
+
+\item{label}{add boxes with labels to the discrete variable}
 }
 \description{
 Extension of the functionalities provided by Seurats FeaturePlot/DimPlot functions
@@ -89,7 +92,7 @@ df = data.frame(umap1=c(1,5,3), umap2=c(2,5,2), fruit=c('Apple', 'Banana', 'Appl
 jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, shape=15, my_title='fruits')
 jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, use_facets=T, n_facet_rows=2)
 jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, use_facets='dish')
-jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, custom_colors=c(Apple='green', Banana='yellow'))
+jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, custom_colors=c(Apple='green', Banana='yellow'), label=T)
 jj_plot_features(seurat_rna, features=c('CD4', 'CD8A'), cap_top='q95', colorScale='viridis')
 df2 = data.frame(a=rnorm(100, 0, 5), b=rnorm(100, 0, 5), d=rbinom(100, 50, 0.3), e = sample(c('A','B'), 100, replace=T))
 jj_plot_features(reduction=df2, meta_features=c('d'), pt.size=4, use_facets = 'e', background_cells = T, order=T, custom_theme = theme_bw())
