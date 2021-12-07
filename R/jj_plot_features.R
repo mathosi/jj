@@ -41,7 +41,8 @@
 #' jj_plot_features(seurat_rna, features=c('CD4', 'CD8A'), cap_top='q95', colorScale='viridis')
 #' df2 = data.frame(a=rnorm(100, 0, 5), b=rnorm(100, 0, 5), d=rbinom(100, 50, 0.3), e = sample(c('A','B'), 100, replace=T))
 #' jj_plot_features(reduction=df2, meta_features=c('d'), pt.size=4, use_facets = 'e', background_cells = T, order=T, custom_theme = theme_bw())
-
+#'
+#'s
 jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, meta_features=NULL,
                          assay='RNA', slot='counts', 
                          colorScale=c('wbr', 'bry', 'seurat', 'viridis'),
