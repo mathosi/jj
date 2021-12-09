@@ -45,7 +45,7 @@
 #'s
 jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, meta_features=NULL,
                          assay='RNA', slot='counts', 
-                         colorScale=c('wbr', 'bry', 'seurat', 'viridis'),
+                         colorScale=c('wbr', 'gbr', 'bry', 'seurat', 'viridis'),
                          use_facets=FALSE, cap_top=NULL,  cap_bottom=NULL, 
                          custom_colors=NULL, custom_theme=theme_minimal(), shape = 16, alpha=1,
                          pt.size=0.1, return_gg_object=FALSE, my_title=NULL, 
@@ -281,6 +281,10 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
       mean_acc <- (max(dr_df[, goi[i]], na.rm = T) + min(dr_df[, goi[i]], na.rm = T)) / 2 #mean(dr_df[, goi[i]])
       print(mean_acc)
       gg <- gg + scale_color_gradient2(low = "#ffffd9", mid = "blue", high = "red", midpoint = mean_acc)
+    }else if(colorScale=='gbr'){
+      mean_acc <- (max(dr_df[, goi[i]], na.rm = T) + min(dr_df[, goi[i]], na.rm = T)) / 2 #mean(dr_df[, goi[i]])
+      print(mean_acc)
+      gg <- gg + scale_color_gradient2(low = "grey80", mid = "blue", high = "red", midpoint = mean_acc)
     }
     
     if(is.theme(custom_theme)){
@@ -291,10 +295,10 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
     }
     if(!is.null(my_title)){
       if(length(my_title) == length(goi)){
-        gg <- gg + ggtitle(my_title[i])
+        gg <- gg + ggtitle(my_title[i]) +  theme(plot.title = element_text(hjust = 0.5))
       }
       else if(length(my_title) == 1){
-        gg <- gg + ggtitle(my_title)
+        gg <- gg + ggtitle(my_title) +  theme(plot.title = element_text(hjust = 0.5))
       }
     }
     
