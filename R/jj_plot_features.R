@@ -41,8 +41,10 @@
 #' jj_plot_features(seurat_rna, features=c('CD4', 'CD8A'), cap_top='q95', colorScale='viridis')
 #' df2 = data.frame(a=rnorm(100, 0, 5), b=rnorm(100, 0, 5), d=rbinom(100, 50, 0.3), e = sample(c('A','B'), 100, replace=T))
 #' jj_plot_features(reduction=df2, meta_features=c('d'), pt.size=4, use_facets = 'e', background_cells = T, order=T, custom_theme = theme_bw())
+#' jj_plot_features(reduction=df2, meta_features='e', pt.size=4, use_facets = 'e', pointdensity = T, order=T, custom_theme = theme_bw())
+#' jj_plot_features(reduction=df2, meta_features='e', pt.size=4, pointdensity = 'B', order=T, custom_theme = theme_bw())
 #'
-#'s
+
 jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, meta_features=NULL,
                          assay='RNA', slot='counts', 
                          colorScale=c('wbr', 'gbr', 'bry', 'seurat', 'viridis'),
@@ -51,7 +53,7 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
                          pt.size=0.1, return_gg_object=FALSE, my_title=NULL, 
                          no_legend=F, n_facet_rows=NULL,
                          cont_or_disc = 'a', 
-                         pointdensity=F, order=FALSE, 
+                         pointdensity=NULL, order=FALSE, 
                          background_cells=FALSE, label=FALSE){
 
   if(is.null(reduction)){
@@ -203,19 +205,35 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
       gg = NULL
     }
     
-    if(pointdensity){
+    if(!is.null(pointdensity)){
       if(!is.null(gg)){
-        gg = gg + 
-          ggpointdensity::geom_pointdensity(data = dr_df, mapping = aes(x=dim_1, y=dim_2), size=pt.size, alpha=alpha) +
-          coord_fixed() +  
-          scale_x_continuous(breaks=seq(floor(range_x[1]),ceiling(range_x[2]),2)) + 
-          scale_y_continuous(breaks=seq(floor(range_y[1]),ceiling(range_y[2]),2))
+        if(pointdensity %in% dr_df[, goi[i] ]){
+          gg = gg + 
+            ggpointdensity::geom_pointdensity(data = dr_df[dr_df[, goi[i]] %in% pointdensity, ], mapping = aes(x=dim_1, y=dim_2), size=pt.size, alpha=alpha) +
+            coord_fixed() +  
+            scale_x_continuous(breaks=seq(floor(range_x[1]),ceiling(range_x[2]),2)) + 
+            scale_y_continuous(breaks=seq(floor(range_y[1]),ceiling(range_y[2]),2))
+        }else{
+          gg = gg + 
+            ggpointdensity::geom_pointdensity(data = dr_df, mapping = aes(x=dim_1, y=dim_2), size=pt.size, alpha=alpha) +
+            coord_fixed() +  
+            scale_x_continuous(breaks=seq(floor(range_x[1]),ceiling(range_x[2]),2)) + 
+            scale_y_continuous(breaks=seq(floor(range_y[1]),ceiling(range_y[2]),2))
+        }
       }else{
-        gg = ggplot() + 
-          ggpointdensity::geom_pointdensity(data = dr_df, mapping = aes(x=dim_1, y=dim_2), size=pt.size, alpha=alpha) +
-          coord_fixed() +  
-          scale_x_continuous(breaks=seq(floor(range_x[1]),ceiling(range_x[2]),2)) + 
-          scale_y_continuous(breaks=seq(floor(range_y[1]),ceiling(range_y[2]),2))
+        if(pointdensity %in% dr_df[, goi[i] ]){
+          gg = ggplot() + 
+            ggpointdensity::geom_pointdensity(data =  dr_df[dr_df[, goi[i]] %in% pointdensity, ], mapping = aes(x=dim_1, y=dim_2), size=pt.size, alpha=alpha) +
+            coord_fixed() +  
+            scale_x_continuous(breaks=seq(floor(range_x[1]),ceiling(range_x[2]),2)) + 
+            scale_y_continuous(breaks=seq(floor(range_y[1]),ceiling(range_y[2]),2))
+        }else{
+          gg = ggplot() + 
+            ggpointdensity::geom_pointdensity(data = dr_df, mapping = aes(x=dim_1, y=dim_2), size=pt.size, alpha=alpha) +
+            coord_fixed() +  
+            scale_x_continuous(breaks=seq(floor(range_x[1]),ceiling(range_x[2]),2)) + 
+            scale_y_continuous(breaks=seq(floor(range_y[1]),ceiling(range_y[2]),2))
+        }
       }
     }else{
       if(is.character(shape)){
@@ -249,7 +267,7 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
       }
     }
     
-    if(pointdensity){
+    if(!is.null(pointdensity)){
       gg = gg + viridis::scale_color_viridis()
     }else if(!all(is.null(custom_colors))){ #& !n_distinct(dr_df[, goi[i]]) < 30){
       if(length(custom_colors)==3 & cont_or_disc[i] == 'c'){
