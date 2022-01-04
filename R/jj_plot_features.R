@@ -201,6 +201,9 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
       rm(dr_df_background_list)
       gg <- ggplot() + 
         geom_point(data = dr_df_background, aes(x=dim_1, y=dim_2), size=pt.size, alpha=alpha, color='grey80')
+    }else if(background_cells){
+      gg <- ggplot() + 
+        geom_point(data = dr_df, aes(x=dim_1, y=dim_2), size=pt.size, alpha=alpha, color='grey80')
     }else{
       gg = NULL
     }
