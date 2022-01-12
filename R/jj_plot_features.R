@@ -30,6 +30,7 @@
 #' @param order order points so that largest values are on top
 #' @param background_cells when using facets, include the cells not part of the facet as grey background 
 #' @param label add boxes with labels to the discrete variable
+#' @param box_col colour to fill boxes, if label = T. If NULL, use colours from the respective groups
 #' @keywords plot
 #' @export
 #' @examples
@@ -54,7 +55,7 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
                          no_legend=F, n_facet_rows=NULL,
                          cont_or_disc = 'a', 
                          pointdensity=NULL, order=FALSE, 
-                         background_cells=FALSE, label=FALSE){
+                         background_cells=FALSE, label=FALSE, box_col=NULL){
 
   if(is.null(reduction)){
     stop('reduction must be either string specifying the reduction to use from seurat object or a dr_df data.frame')
@@ -345,7 +346,7 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
     
     if(label & cont_or_disc[i] == 'd'){
       gg$data[, goi[i]] = as.factor(gg$data[, goi[i]])
-      gg = .LabelClusters(gg, goi[i], box = T)
+      gg = .LabelClusters(gg, goi[i], box = T, col_use = box_col)
     }
     
     if(return_gg_object){
@@ -372,6 +373,7 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
   box = FALSE,
   geom = 'GeomPoint',
   position = "median",
+  col_use = NULL,
   ...
 ) {
   #dr_df <- get_reduction_coords(seurat_atac, 'umap')
@@ -493,20 +495,38 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
   }
   if (box) {
     geom.use <- ifelse(test = repel, yes = geom_label_repel, no = geom_label)
-    plot <- plot + geom.use(
-      data = labels.loc,
-      mapping = aes_string(x = xynames['x'], y = xynames['y'], label = id, fill = id),
-      show.legend = FALSE,
-      ...
-    ) + scale_fill_manual(values = labels.loc$color[order(labels.loc[, id])])
+    if(!is.null(col_use)){
+      plot <- plot + geom.use(
+        data = labels.loc,
+        mapping = aes_string(x = xynames['x'], y = xynames['y'], label = id), fill = col_use,
+        show.legend = FALSE,
+        ...
+      )
+    }else{
+      plot <- plot + geom.use(
+        data = labels.loc,
+        mapping = aes_string(x = xynames['x'], y = xynames['y'], label = id, fill = id),
+        show.legend = FALSE,
+        ...
+      ) + scale_fill_manual(values = labels.loc$color[order(labels.loc[, id])])
+    }
   } else {
     geom.use <- ifelse(test = repel, yes = geom_text_repel, no = geom_text)
-    plot <- plot + geom.use(
-      data = labels.loc,
-      mapping = aes_string(x = xynames['x'], y = xynames['y'], label = id, colour=id),
-      show.legend = FALSE,
-      ...
-    )
+    if(!is.null(col_use)){
+      plot <- plot + geom.use(
+        data = labels.loc,
+        mapping = aes_string(x = xynames['x'], y = xynames['y'], label = id), colour=col_use,
+        show.legend = FALSE,
+        ...
+      )
+    }else{
+      plot <- plot + geom.use(
+        data = labels.loc,
+        mapping = aes_string(x = xynames['x'], y = xynames['y'], label = id, colour=id),
+        show.legend = FALSE,
+        ...
+      )
+    }
   }
   return(plot)
 }
