@@ -26,7 +26,8 @@
 #' @param use_facets either TRUE/FALSE: facet by the meta_feature, or a string specifying another meta_feature to facet by
 #' @param n_facet_rows number of rows for facetted plots
 #' @param cont_or_disc string of length 1 or length n features indicating whether the features are continuous 'c' or discrete 'd'. Try to set this manually, when the function fails. Otherwise, set to 'a' to automatically determine c or d for each feature.
-#' @param pointdensity colour by pointdensity instead of feature using the ggpointdensity package
+#' @param use_pointdensity colour by pointdensity using the ggpointdensity package. 
+#' @param pointdensity_subset Only used if use_pointdensity=T. If NULL, use all cells. If set to groups within meta_features, only calculate density for these subgroups
 #' @param order order points so that largest values are on top
 #' @param background_cells when using facets, include the cells not part of the facet as grey background 
 #' @param label add boxes with labels to the discrete variable
@@ -40,21 +41,22 @@
 #' jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, use_facets='dish')
 #' jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, custom_colors=c(Apple='green', Banana='yellow'), label=T)
 #' jj_plot_features(seurat_rna, features=c('CD4', 'CD8A'), cap_top='q95', colorScale='viridis')
-#' df2 = data.frame(a=rnorm(100, 0, 5), b=rnorm(100, 0, 5), d=rbinom(100, 50, 0.3), e = sample(c('A','B'), 100, replace=T))
+#' df2 = data.frame(a=rnorm(100, 0, 5), b=rnorm(100, 0, 5), d=rbinom(100, 50, 0.3), e = sample(c('A','B', 'C'), 100, replace=T))
 #' jj_plot_features(reduction=df2, meta_features=c('d'), pt.size=4, use_facets = 'e', background_cells = T, order=T, custom_theme = theme_bw())
-#' jj_plot_features(reduction=df2, meta_features='e', pt.size=4, use_facets = 'e', pointdensity = T, order=T, custom_theme = theme_bw())
-#' jj_plot_features(reduction=df2, meta_features='e', pt.size=4, pointdensity = 'B', order=T, custom_theme = theme_bw())
+#' jj_plot_features(reduction=df2, meta_features='e', pt.size=4, use_facets = 'e', use_pointdensity = T, order=T, custom_theme = theme_bw())
+#' jj_plot_features(reduction=df2, meta_features='e', pt.size=4, use_pointdensity = T, pointdensity_subset = c('B','C'), order=T, custom_theme = theme_bw())
+#' jj_plot_features(reduction=df2, meta_features='e', pt.size=4, use_pointdensity = T, pointdensity_subset = c('B','C'), background_cells=T, order=T, custom_theme = theme_bw())
 #'
 
 jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, meta_features=NULL,
                          assay='RNA', slot='counts', 
-                         colorScale=c('wbr', 'gbr', 'bry', 'seurat', 'viridis'),
+                         colorScale=c('viridis', 'wbr', 'gbr', 'bry', 'seurat'),
                          use_facets=FALSE, cap_top=NULL,  cap_bottom=NULL, 
                          custom_colors=NULL, custom_theme=theme_minimal(), shape = 16, alpha=1,
-                         pt.size=0.1, return_gg_object=FALSE, my_title=NULL, 
+                         pt.size=0.5, return_gg_object=FALSE, my_title=NULL, 
                          no_legend=F, n_facet_rows=NULL,
-                         cont_or_disc = 'a', 
-                         pointdensity=NULL, order=FALSE, 
+                         cont_or_disc = 'a', use_pointdensity = FALSE,
+                         pointdensity_subset=NULL, order=FALSE, 
                          background_cells=FALSE, label=FALSE, box_col=NULL){
 
   if(is.null(reduction)){
@@ -209,11 +211,11 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
       gg = NULL
     }
     
-    if(!is.null(pointdensity)){
+    if(use_pointdensity){
       if(!is.null(gg)){
-        if(pointdensity %in% dr_df[, goi[i] ]){
+        if(any(pointdensity_subset %in% dr_df[, goi[i] ])){
           gg = gg + 
-            ggpointdensity::geom_pointdensity(data = dr_df[dr_df[, goi[i]] %in% pointdensity, ], mapping = aes(x=dim_1, y=dim_2), size=pt.size, alpha=alpha) +
+            ggpointdensity::geom_pointdensity(data = dr_df[dr_df[, goi[i]] %in% pointdensity_subset, ], mapping = aes(x=dim_1, y=dim_2), size=pt.size, alpha=alpha) +
             coord_fixed() +  
             scale_x_continuous(breaks=seq(floor(range_x[1]),ceiling(range_x[2]),2)) + 
             scale_y_continuous(breaks=seq(floor(range_y[1]),ceiling(range_y[2]),2))
@@ -225,9 +227,9 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
             scale_y_continuous(breaks=seq(floor(range_y[1]),ceiling(range_y[2]),2))
         }
       }else{
-        if(pointdensity %in% dr_df[, goi[i] ]){
+        if(any(pointdensity_subset %in% dr_df[, goi[i] ])){
           gg = ggplot() + 
-            ggpointdensity::geom_pointdensity(data =  dr_df[dr_df[, goi[i]] %in% pointdensity, ], mapping = aes(x=dim_1, y=dim_2), size=pt.size, alpha=alpha) +
+            ggpointdensity::geom_pointdensity(data =  dr_df[dr_df[, goi[i]] %in% pointdensity_subset, ], mapping = aes(x=dim_1, y=dim_2), size=pt.size, alpha=alpha) +
             coord_fixed() +  
             scale_x_continuous(breaks=seq(floor(range_x[1]),ceiling(range_x[2]),2)) + 
             scale_y_continuous(breaks=seq(floor(range_y[1]),ceiling(range_y[2]),2))
@@ -271,7 +273,7 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
       }
     }
     
-    if(!is.null(pointdensity)){
+    if(use_pointdensity){
       gg = gg + viridis::scale_color_viridis()
     }else if(!all(is.null(custom_colors))){ #& !n_distinct(dr_df[, goi[i]]) < 30){
       if(length(custom_colors)==3 & cont_or_disc[i] == 'c'){
