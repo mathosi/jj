@@ -2,7 +2,7 @@
 #'
 #'
 #' @param annotation_vector vector with the groups for which colours are needed
-#' @param colour_csv two column csv with annotation in first column and colour in second column
+#' @param colour_csv two column csv with annotation in first column and colour in second column (alternatively a data.frame with columns `group` and `colour`)
 #' @param plot_colours visualize colours as ggplot heatmap, default: F
 #' @keywords colours
 #' @export
@@ -16,8 +16,13 @@
 #' jj_get_colours(colour_csv='colour_map.csv', plot_colours=TRUE)
 #' DimPlot(seurat_rna,  group.by = 'fruits') + scale_colour_manual(values=jj_get_colours(seurat_rna$clinical, colour_csv='colour_map.csv'))
 
-jj_get_colours = function(annotation_vector=NULL, colour_csv, plot_colours=FALSE){
-  col_df = read.csv(colour_csv, header = F, col.names = c('group', 'colour'), strip.white = T, blank.lines.skip = T, comment.char = '/')
+jj_get_colours = function(annotation_vector=NULL, colour_csv, plot_colours=FALSE, comment_char="/"){
+  if(is.data.frame(colour_csv)){
+    stopifnot(identical(colnames(colour_csv), c('group', 'colour')))
+    col_df = as.data.frame(colour_csv)
+  }else{
+    col_df = read.csv(colour_csv, header = F, col.names = c('group', 'colour'), strip.white = T, blank.lines.skip = T, comment.char = comment_char)
+  }
   stopifnot(!anyDuplicated(col_df$group))
   col_df$colour = toupper(col_df$colour)
   col_vec = structure(col_df$colour, names=col_df$group)

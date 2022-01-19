@@ -26,10 +26,12 @@
 #' @param use_facets either TRUE/FALSE: facet by the meta_feature, or a string specifying another meta_feature to facet by
 #' @param n_facet_rows number of rows for facetted plots
 #' @param cont_or_disc string of length 1 or length n features indicating whether the features are continuous 'c' or discrete 'd'. Try to set this manually, when the function fails. Otherwise, set to 'a' to automatically determine c or d for each feature.
-#' @param pointdensity colour by pointdensity instead of feature using the ggpointdensity package
+#' @param use_pointdensity colour by pointdensity using the ggpointdensity package. 
+#' @param pointdensity_subset Only used if use_pointdensity=T. If NULL, use all cells. If set to groups within meta_features, only calculate density for these subgroups
 #' @param order order points so that largest values are on top
 #' @param background_cells when using facets, include the cells not part of the facet as grey background 
 #' @param label add boxes with labels to the discrete variable
+#' @param box_col colour to fill boxes, if label = T. If NULL, use colours from the respective groups
 #' @keywords plot
 #' @export
 #' @examples
@@ -39,21 +41,24 @@
 #' jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, use_facets='dish')
 #' jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, custom_colors=c(Apple='green', Banana='yellow'), label=T)
 #' jj_plot_features(seurat_rna, features=c('CD4', 'CD8A'), cap_top='q95', colorScale='viridis')
-#' df2 = data.frame(a=rnorm(100, 0, 5), b=rnorm(100, 0, 5), d=rbinom(100, 50, 0.3), e = sample(c('A','B'), 100, replace=T))
+#' df2 = data.frame(a=rnorm(100, 0, 5), b=rnorm(100, 0, 5), d=rbinom(100, 50, 0.3), e = sample(c('A','B', 'C'), 100, replace=T))
 #' jj_plot_features(reduction=df2, meta_features=c('d'), pt.size=4, use_facets = 'e', background_cells = T, order=T, custom_theme = theme_bw())
+#' jj_plot_features(reduction=df2, meta_features='e', pt.size=4, use_facets = 'e', use_pointdensity = T, order=T, custom_theme = theme_bw())
+#' jj_plot_features(reduction=df2, meta_features='e', pt.size=4, use_pointdensity = T, pointdensity_subset = c('B','C'), order=T, custom_theme = theme_bw())
+#' jj_plot_features(reduction=df2, meta_features='e', pt.size=4, use_pointdensity = T, pointdensity_subset = c('B','C'), background_cells=T, order=T, custom_theme = theme_bw())
 #'
-#'s
-jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, meta_features=NULL,
-                         assay='RNA', slot='counts', 
-                         colorScale=c('wbr', 'bry', 'seurat', 'viridis'),
-                         use_facets=FALSE, cap_top=NULL,  cap_bottom=NULL, 
-                         custom_colors=NULL, custom_theme=theme_minimal(), shape = 16, alpha=1,
-                         pt.size=0.1, return_gg_object=FALSE, my_title=NULL, 
-                         no_legend=F, n_facet_rows=NULL,
-                         cont_or_disc = 'a', 
-                         pointdensity=F, order=FALSE, 
-                         background_cells=FALSE, label=FALSE){
 
+jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, meta_features=NULL,
+                             assay='RNA', slot='counts', 
+                             colorScale=c('viridis', 'wbr', 'gbr', 'bry', 'seurat'),
+                             use_facets=FALSE, cap_top=NULL,  cap_bottom=NULL, 
+                             custom_colors=NULL, custom_theme=theme_minimal(), shape = 16, alpha=1,
+                             pt.size=0.5, return_gg_object=FALSE, my_title=NULL, 
+                             no_legend=F, n_facet_rows=NULL,
+                             cont_or_disc = 'a', use_pointdensity = FALSE,
+                             pointdensity_subset=NULL, order=FALSE, 
+                             background_cells=FALSE, label=FALSE, box_col=NULL){
+  
   if(is.null(reduction)){
     stop('reduction must be either string specifying the reduction to use from seurat object or a dr_df data.frame')
   }
@@ -135,8 +140,8 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
     message('getting feature matrix')
     if(!all(features %in% colnames(dr_df))){
       dr_df <- jj_bind_features_with_dr_df(seurat_obj, assay=assay, slot=slot, 
-                                        features=features, dr_df=dr_df, cap_top=cap_top, 
-                                        cap_bottom=cap_bottom, log10Transform=FALSE)
+                                           features=features, dr_df=dr_df, cap_top=cap_top, 
+                                           cap_bottom=cap_bottom, log10Transform=FALSE)
     }
     goi <- gsub('-', '_', features)
     #colnames(dr_df)[colnames(dr_df) %in% features] <- goi
@@ -199,23 +204,42 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
       rm(dr_df_background_list)
       gg <- ggplot() + 
         geom_point(data = dr_df_background, aes(x=dim_1, y=dim_2), size=pt.size, alpha=alpha, color='grey80')
+    }else if(background_cells){
+      gg <- ggplot() + 
+        geom_point(data = dr_df, aes(x=dim_1, y=dim_2), size=pt.size, alpha=alpha, color='grey80')
     }else{
       gg = NULL
     }
     
-    if(pointdensity){
+    if(use_pointdensity){
       if(!is.null(gg)){
-        gg = gg + 
-          ggpointdensity::geom_pointdensity(data = dr_df, mapping = aes(x=dim_1, y=dim_2), size=pt.size, alpha=alpha) +
-          coord_fixed() +  
-          scale_x_continuous(breaks=seq(floor(range_x[1]),ceiling(range_x[2]),2)) + 
-          scale_y_continuous(breaks=seq(floor(range_y[1]),ceiling(range_y[2]),2))
+        if(any(pointdensity_subset %in% dr_df[, goi[i] ])){
+          gg = gg + 
+            ggpointdensity::geom_pointdensity(data = dr_df[dr_df[, goi[i]] %in% pointdensity_subset, ], mapping = aes(x=dim_1, y=dim_2), size=pt.size, alpha=alpha) +
+            coord_fixed() +  
+            scale_x_continuous(breaks=seq(floor(range_x[1]),ceiling(range_x[2]),2)) + 
+            scale_y_continuous(breaks=seq(floor(range_y[1]),ceiling(range_y[2]),2))
+        }else{
+          gg = gg + 
+            ggpointdensity::geom_pointdensity(data = dr_df, mapping = aes(x=dim_1, y=dim_2), size=pt.size, alpha=alpha) +
+            coord_fixed() +  
+            scale_x_continuous(breaks=seq(floor(range_x[1]),ceiling(range_x[2]),2)) + 
+            scale_y_continuous(breaks=seq(floor(range_y[1]),ceiling(range_y[2]),2))
+        }
       }else{
-        gg = ggplot() + 
-          ggpointdensity::geom_pointdensity(data = dr_df, mapping = aes(x=dim_1, y=dim_2), size=pt.size, alpha=alpha) +
-          coord_fixed() +  
-          scale_x_continuous(breaks=seq(floor(range_x[1]),ceiling(range_x[2]),2)) + 
-          scale_y_continuous(breaks=seq(floor(range_y[1]),ceiling(range_y[2]),2))
+        if(any(pointdensity_subset %in% dr_df[, goi[i] ])){
+          gg = ggplot() + 
+            ggpointdensity::geom_pointdensity(data =  dr_df[dr_df[, goi[i]] %in% pointdensity_subset, ], mapping = aes(x=dim_1, y=dim_2), size=pt.size, alpha=alpha) +
+            coord_fixed() +  
+            scale_x_continuous(breaks=seq(floor(range_x[1]),ceiling(range_x[2]),2)) + 
+            scale_y_continuous(breaks=seq(floor(range_y[1]),ceiling(range_y[2]),2))
+        }else{
+          gg = ggplot() + 
+            ggpointdensity::geom_pointdensity(data = dr_df, mapping = aes(x=dim_1, y=dim_2), size=pt.size, alpha=alpha) +
+            coord_fixed() +  
+            scale_x_continuous(breaks=seq(floor(range_x[1]),ceiling(range_x[2]),2)) + 
+            scale_y_continuous(breaks=seq(floor(range_y[1]),ceiling(range_y[2]),2))
+        }
       }
     }else{
       if(is.character(shape)){
@@ -249,7 +273,7 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
       }
     }
     
-    if(pointdensity){
+    if(use_pointdensity){
       gg = gg + viridis::scale_color_viridis()
     }else if(!all(is.null(custom_colors))){ #& !n_distinct(dr_df[, goi[i]]) < 30){
       if(length(custom_colors)==3 & cont_or_disc[i] == 'c'){
@@ -281,6 +305,10 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
       mean_acc <- (max(dr_df[, goi[i]], na.rm = T) + min(dr_df[, goi[i]], na.rm = T)) / 2 #mean(dr_df[, goi[i]])
       print(mean_acc)
       gg <- gg + scale_color_gradient2(low = "#ffffd9", mid = "blue", high = "red", midpoint = mean_acc)
+    }else if(colorScale=='gbr'){
+      mean_acc <- (max(dr_df[, goi[i]], na.rm = T) + min(dr_df[, goi[i]], na.rm = T)) / 2 #mean(dr_df[, goi[i]])
+      print(mean_acc)
+      gg <- gg + scale_color_gradient2(low = "grey80", mid = "blue", high = "red", midpoint = mean_acc)
     }
     
     if(is.theme(custom_theme)){
@@ -291,10 +319,10 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
     }
     if(!is.null(my_title)){
       if(length(my_title) == length(goi)){
-        gg <- gg + ggtitle(my_title[i])
+        gg <- gg + ggtitle(my_title[i]) +  theme(plot.title = element_text(hjust = 0.5))
       }
       else if(length(my_title) == 1){
-        gg <- gg + ggtitle(my_title)
+        gg <- gg + ggtitle(my_title) +  theme(plot.title = element_text(hjust = 0.5))
       }
     }
     
@@ -320,7 +348,7 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
     
     if(label & cont_or_disc[i] == 'd'){
       gg$data[, goi[i]] = as.factor(gg$data[, goi[i]])
-      gg = .LabelClusters(gg, goi[i], box = T)
+      gg = .LabelClusters(gg, goi[i], box = T, col_use = box_col)
     }
     
     if(return_gg_object){
@@ -347,6 +375,7 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
   box = FALSE,
   geom = 'GeomPoint',
   position = "median",
+  col_use = NULL,
   ...
 ) {
   #dr_df <- get_reduction_coords(seurat_atac, 'umap')
@@ -468,20 +497,38 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
   }
   if (box) {
     geom.use <- ifelse(test = repel, yes = geom_label_repel, no = geom_label)
-    plot <- plot + geom.use(
-      data = labels.loc,
-      mapping = aes_string(x = xynames['x'], y = xynames['y'], label = id, fill = id),
-      show.legend = FALSE,
-      ...
-    ) + scale_fill_manual(values = labels.loc$color[order(labels.loc[, id])])
+    if(!is.null(col_use)){
+      plot <- plot + geom.use(
+        data = labels.loc,
+        mapping = aes_string(x = xynames['x'], y = xynames['y'], label = id), fill = col_use,
+        show.legend = FALSE,
+        ...
+      )
+    }else{
+      plot <- plot + geom.use(
+        data = labels.loc,
+        mapping = aes_string(x = xynames['x'], y = xynames['y'], label = id, fill = id),
+        show.legend = FALSE,
+        ...
+      ) + scale_fill_manual(values = labels.loc$color[order(labels.loc[, id])])
+    }
   } else {
     geom.use <- ifelse(test = repel, yes = geom_text_repel, no = geom_text)
-    plot <- plot + geom.use(
-      data = labels.loc,
-      mapping = aes_string(x = xynames['x'], y = xynames['y'], label = id, colour=id),
-      show.legend = FALSE,
-      ...
-    )
+    if(!is.null(col_use)){
+      plot <- plot + geom.use(
+        data = labels.loc,
+        mapping = aes_string(x = xynames['x'], y = xynames['y'], label = id), colour=col_use,
+        show.legend = FALSE,
+        ...
+      )
+    }else{
+      plot <- plot + geom.use(
+        data = labels.loc,
+        mapping = aes_string(x = xynames['x'], y = xynames['y'], label = id, colour=id),
+        show.legend = FALSE,
+        ...
+      )
+    }
   }
   return(plot)
 }

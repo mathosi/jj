@@ -22,6 +22,7 @@
 jj_summarize_sparse_mat <- function(summarize_obj, summarize_by_vec, type='mean', return_matrix=TRUE){ 
   #also works for normal matrices
   stopifnot(is.vector(summarize_by_vec))
+  stopifnot(!is.factor(summarize_by_vec))
   if(!identical(ncol(summarize_obj), length(summarize_by_vec))){
     stop('Number of columns in the assay and length of group vector must be identical')
   }
@@ -46,6 +47,7 @@ jj_summarize_sparse_mat <- function(summarize_obj, summarize_by_vec, type='mean'
 #' @export
 jj_summarize_vector = function(summarize_obj, summarize_by_vec, type='mean', order=T, return_vec=F){
   stopifnot(is.vector(summarize_obj) & is.vector(summarize_by_vec))
+  stopifnot(!is.factor(summarize_obj) & !is.factor(summarize_by_vec))
   type = match.arg(type, choices = c('mode','mean'))
   df = data.frame(a=summarize_obj, b=summarize_by_vec)
   if(type=='mode'){
@@ -67,7 +69,9 @@ jj_summarize_vector = function(summarize_obj, summarize_by_vec, type='mean', ord
     df = df %>% dplyr::arrange(b)
   }
   if(return_vec){
-    return(df$a)
+    a = df$a
+    names(a) = df$b
+    return(a)
   }
   return(df)
 }
@@ -76,12 +80,14 @@ jj_summarize_vector = function(summarize_obj, summarize_by_vec, type='mean', ord
 #' @export
 jj_summarize_dataframe = function(summarize_obj, summarize_by_vec){
   stopifnot(is.vector(summarize_by_vec))
+  stopifnot(!is.factor(summarize_by_vec))
   summarize_df = as.data.frame(summarize_obj)
   stopifnot(identical(nrow(summarize_df), length(summarize_by_vec)))
   sdf = jj_initialize_df(ncol = ncol(summarize_df), 
                          nrow = length(unique(summarize_by_vec)),
                          init = NA, 
-                         col.names = colnames(summarize_df))
+                         col.names = colnames(summarize_df),
+                         row.names = sort(unique(summarize_by_vec)))
   
   for(i in 1:ncol(summarize_df)){
     if(class(summarize_df[, i]) %in% c('numeric','integer')){
