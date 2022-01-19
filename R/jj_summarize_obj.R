@@ -5,7 +5,7 @@
 #' jj_summarize_dataframe summarizes each column in a data.frame based on a group vector
 #'
 #' @name summarise_vals
-#' @param summarize_obj list of ggplot objects
+#' @param summarize_obj sparse matrix, vector, or data.frame
 #' @param summarize_by_vec vector with group annotation, has to have length equal to ncol(sparse_mat)/nrow(data.frame)/length(vector)
 #' @param return_matrix return as matrix instead of sparse matrix
 #' @param order order the summarized vector by the groups
