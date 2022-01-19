@@ -48,7 +48,7 @@
 #' jj_plot_features(reduction=df2, meta_features='e', pt.size=4, use_pointdensity = T, pointdensity_subset = c('B','C'), background_cells=T, order=T, custom_theme = theme_bw())
 #'
 
-jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, meta_features=NULL,
+j_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, meta_features=NULL,
                              assay='RNA', slot='counts', 
                              colorScale=c('viridis', 'wbr', 'gbr', 'bry', 'seurat'),
                              use_facets=FALSE, cap_top=NULL,  cap_bottom=NULL, 
