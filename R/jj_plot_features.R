@@ -49,16 +49,16 @@
 #'
 
 jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, meta_features=NULL,
-                         assay='RNA', slot='counts', 
-                         colorScale=c('viridis', 'wbr', 'gbr', 'bry', 'seurat'),
-                         use_facets=FALSE, cap_top=NULL,  cap_bottom=NULL, 
-                         custom_colors=NULL, custom_theme=theme_minimal(), shape = 16, alpha=1,
-                         pt.size=0.5, return_gg_object=FALSE, my_title=NULL, 
-                         no_legend=F, n_facet_rows=NULL,
-                         cont_or_disc = 'a', use_pointdensity = FALSE,
-                         pointdensity_subset=NULL, order=FALSE, 
-                         background_cells=FALSE, label=FALSE, box_col=NULL){
-
+                             assay='RNA', slot='counts', 
+                             colorScale=c('viridis', 'wbr', 'gbr', 'bry', 'seurat'),
+                             use_facets=FALSE, cap_top=NULL,  cap_bottom=NULL, 
+                             custom_colors=NULL, custom_theme=theme_minimal(), shape = 16, alpha=1,
+                             pt.size=0.5, return_gg_object=FALSE, my_title=NULL, 
+                             no_legend=F, n_facet_rows=NULL,
+                             cont_or_disc = 'a', use_pointdensity = FALSE,
+                             pointdensity_subset=NULL, order=FALSE, 
+                             background_cells=FALSE, label=FALSE, box_col=NULL){
+  
   if(is.null(reduction)){
     stop('reduction must be either string specifying the reduction to use from seurat object or a dr_df data.frame')
   }
@@ -140,8 +140,8 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
     message('getting feature matrix')
     if(!all(features %in% colnames(dr_df))){
       dr_df <- jj_bind_features_with_dr_df(seurat_obj, assay=assay, slot=slot, 
-                                        features=features, dr_df=dr_df, cap_top=cap_top, 
-                                        cap_bottom=cap_bottom, log10Transform=FALSE)
+                                           features=features, dr_df=dr_df, cap_top=cap_top, 
+                                           cap_bottom=cap_bottom, log10Transform=FALSE)
     }
     goi <- gsub('-', '_', features)
     #colnames(dr_df)[colnames(dr_df) %in% features] <- goi

@@ -11,7 +11,7 @@ jj_plot_features(
   meta_features = NULL,
   assay = "RNA",
   slot = "counts",
-  colorScale = c("wbr", "bry", "seurat", "viridis"),
+  colorScale = c("viridis", "wbr", "gbr", "bry", "seurat"),
   use_facets = FALSE,
   cap_top = NULL,
   cap_bottom = NULL,
@@ -19,16 +19,18 @@ jj_plot_features(
   custom_theme = theme_minimal(),
   shape = 16,
   alpha = 1,
-  pt.size = 0.1,
+  pt.size = 0.5,
   return_gg_object = FALSE,
   my_title = NULL,
   no_legend = F,
   n_facet_rows = NULL,
   cont_or_disc = "a",
-  pointdensity = F,
+  use_pointdensity = FALSE,
+  pointdensity_subset = NULL,
   order = FALSE,
   background_cells = FALSE,
-  label = FALSE
+  label = FALSE,
+  box_col = NULL
 )
 }
 \arguments{
@@ -72,13 +74,17 @@ jj_plot_features(
 
 \item{cont_or_disc}{string of length 1 or length n features indicating whether the features are continuous 'c' or discrete 'd'. Try to set this manually, when the function fails. Otherwise, set to 'a' to automatically determine c or d for each feature.}
 
-\item{pointdensity}{colour by pointdensity instead of feature using the ggpointdensity package}
+\item{use_pointdensity}{colour by pointdensity using the ggpointdensity package.}
+
+\item{pointdensity_subset}{Only used if use_pointdensity=T. If NULL, use all cells. If set to groups within meta_features, only calculate density for these subgroups}
 
 \item{order}{order points so that largest values are on top}
 
 \item{background_cells}{when using facets, include the cells not part of the facet as grey background}
 
 \item{label}{add boxes with labels to the discrete variable}
+
+\item{box_col}{colour to fill boxes, if label = T. If NULL, use colours from the respective groups}
 }
 \description{
 Extension of the functionalities provided by Seurats FeaturePlot/DimPlot functions
@@ -94,7 +100,11 @@ jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, use_facets=T
 jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, use_facets='dish')
 jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, custom_colors=c(Apple='green', Banana='yellow'), label=T)
 jj_plot_features(seurat_rna, features=c('CD4', 'CD8A'), cap_top='q95', colorScale='viridis')
-df2 = data.frame(a=rnorm(100, 0, 5), b=rnorm(100, 0, 5), d=rbinom(100, 50, 0.3), e = sample(c('A','B'), 100, replace=T))
+df2 = data.frame(a=rnorm(100, 0, 5), b=rnorm(100, 0, 5), d=rbinom(100, 50, 0.3), e = sample(c('A','B', 'C'), 100, replace=T))
 jj_plot_features(reduction=df2, meta_features=c('d'), pt.size=4, use_facets = 'e', background_cells = T, order=T, custom_theme = theme_bw())
+jj_plot_features(reduction=df2, meta_features='e', pt.size=4, use_facets = 'e', use_pointdensity = T, order=T, custom_theme = theme_bw())
+jj_plot_features(reduction=df2, meta_features='e', pt.size=4, use_pointdensity = T, pointdensity_subset = c('B','C'), order=T, custom_theme = theme_bw())
+jj_plot_features(reduction=df2, meta_features='e', pt.size=4, use_pointdensity = T, pointdensity_subset = c('B','C'), background_cells=T, order=T, custom_theme = theme_bw())
+
 }
 \keyword{plot}
