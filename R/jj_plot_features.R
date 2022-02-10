@@ -48,7 +48,7 @@
 #' jj_plot_features(reduction=df2, meta_features='e', pt.size=4, use_pointdensity = T, pointdensity_subset = c('B','C'), background_cells=T, order=T, custom_theme = theme_bw())
 #'
 
-j_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, meta_features=NULL,
+jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, meta_features=NULL,
                              assay='RNA', slot='counts', 
                              colorScale=c('viridis', 'wbr', 'gbr', 'bry', 'seurat'),
                              use_facets=FALSE, cap_top=NULL,  cap_bottom=NULL, 
@@ -57,7 +57,7 @@ j_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, meta
                              no_legend=F, n_facet_rows=NULL,
                              cont_or_disc = 'a', use_pointdensity = FALSE,
                              pointdensity_subset=NULL, order=FALSE, 
-                             background_cells=FALSE, label=FALSE, box_col=NULL){
+                             background_cells=FALSE, label=FALSE, box_col=NULL, convert_factors=FALSE){
   
   if(is.null(reduction)){
     stop('reduction must be either string specifying the reduction to use from seurat object or a dr_df data.frame')
@@ -103,11 +103,18 @@ j_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, meta
       if(length(goi)==0){return(NULL)}
     }
     
-    for(me in goi){
-      if(is.factor(dr_df[, me])){
-        dr_df[, me] <- as.numeric(as.character(dr_df[, me]))
+    #convert_factors to numeric if possible and otherwise to character
+    if(convert_factors){
+      for(me in goi){
+        if(is.factor(dr_df[, me])){
+          dr_df[, me] = as.character(dr_df[, me])
+          if(Hmisc::all.is.numeric(dr_df[, me])){
+            dr_df[, me] <- as.numeric(dr_df[, me])
+          }
+        }
       }
     }
+
     if(!is.null(cap_top) | !is.null(cap_bottom)){
       message('Capping meta feature values')
       for(i in goi){
@@ -121,7 +128,7 @@ j_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, meta
       cont_or_disc = vector()
       #cont_or_disc = paste(ifelse(sapply(dr_df[, colnames(dr_df) %in% goi], class) == 'character', 'd', 'c'), collapse = '')
       for(i in goi){
-        if(class(dr_df[, colnames(dr_df) %in% i]) == 'character'){
+        if(class(dr_df[, colnames(dr_df) %in% i]) %in% c('character','factor')){
           cont_or_disc = c(cont_or_disc, 'd')
         }else{
           if(n_distinct(dr_df[, colnames(dr_df) %in% i]) < 11){
@@ -132,7 +139,7 @@ j_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, meta
         }
       }
       #cont_or_disc = paste(cont_or_disc, collapse = '')
-      print(cont_or_disc)
+      message(cont_or_disc)
     }
   }
   
@@ -163,29 +170,29 @@ j_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, meta
   for(i in seq_along(goi)){
     message(sprintf('%i/%i: %s', i, length(goi), goi[i]))
     
-    if(is.factor(dr_df[, goi[i]])){
-      dr_df[, goi[i]] <- as.character(dr_df[, goi[i]])
-      if(Hmisc::all.is.numeric(dr_df[, goi[i]]) & n_distinct(dr_df[, goi[i]]) >=30){
-        message("Converting factor to numeric")
-        dr_df[, goi[i]] <- as.numeric(dr_df[, goi[i]])
-      }else{
-        message("Converting factor to character.")
-      }
-    }
+    # if(is.factor(dr_df[, goi[i]])){
+    #   dr_df[, goi[i]] <- as.character(dr_df[, goi[i]])
+    #   if(Hmisc::all.is.numeric(dr_df[, goi[i]]) & n_distinct(dr_df[, goi[i]]) >=30){
+    #     message("Converting factor to numeric")
+    #     dr_df[, goi[i]] <- as.numeric(dr_df[, goi[i]])
+    #   }else{
+    #     message("Converting factor to character.")
+    #   }
+    # }
     
     if(cont_or_disc[i] == 'd'){
-      dr_df[, goi[i] ] = as.character(dr_df[, goi[i] ])
+      #dr_df[, goi[i] ] = as.character(dr_df[, goi[i] ])
       if(!is.null(custom_colors)){
         if(is.null(names(custom_colors))){
           names(custom_colors) = levels(as.factor(dr_df[, goi[i] ]))
         }
         breaks_use = names(custom_colors)
         dr_df[, goi[i] ] <- factor(dr_df[, goi[i] ], levels= breaks_use)
-      }else if(suppressWarnings(sum(is.na(as.numeric(names(jj_get_jj_colours(dr_df[, goi[i] ]))))) == 1 )){
-        breaks_use <- suppressWarnings(as.character(sort(as.numeric(names(jj_get_jj_colours(dr_df[, goi[i]]))), decreasing = F)))
-        dr_df[, goi[i] ] <- factor(dr_df[, goi[i] ], levels= breaks_use)
+      #}else if(suppressWarnings(sum(is.na(as.numeric(names(jj_get_jj_colours(levels(as.factor(dr_df[, goi[i] ]))))))) == 1 )){
+      #  breaks_use <- suppressWarnings(as.character(sort(as.numeric(names(jj_get_jj_colours(dr_df[, goi[i]]))), decreasing = F)))
+      #  dr_df[, goi[i] ] <- factor(dr_df[, goi[i] ], levels= breaks_use)
       }else{
-        breaks_use <- names(jj_get_jj_colours(dr_df[, goi[i]]))
+        breaks_use <- names(jj_get_jj_colours(levels(as.factor(dr_df[, goi[i]]))))
       }
     }
     
@@ -292,7 +299,7 @@ j_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, meta
       #TODO: can error if discrete number of values is > =30
       #plot with discrete colors if less than 30 distinct values in variable (or if d is set (check for <60 distinct groups as sanity check))
       gg <- gg +
-        scale_colour_manual(values = jj_get_jj_colours(dr_df[, goi[i]]), breaks = breaks_use) + 
+        scale_colour_manual(values = jj_get_jj_colours(breaks_use)) + 
         guides(colour = guide_legend(override.aes = list(size=5)))
     }else if(colorScale=='viridis'){
       gg <- gg + viridis::scale_color_viridis()
