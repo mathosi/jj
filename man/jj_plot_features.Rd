@@ -30,7 +30,8 @@ jj_plot_features(
   order = FALSE,
   background_cells = FALSE,
   label = FALSE,
-  box_col = NULL
+  box_col = NULL,
+  convert_factors = FALSE
 )
 }
 \arguments{

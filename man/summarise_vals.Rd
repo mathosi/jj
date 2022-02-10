@@ -10,7 +10,7 @@
 jj_summarize_sparse_mat(
   summarize_obj,
   summarize_by_vec,
-  type = "mean",
+  method = "mean",
   return_matrix = TRUE
 )
 
@@ -22,12 +22,14 @@ jj_summarize_vector(
   return_vec = F
 )
 
-jj_summarize_dataframe(summarize_obj, summarize_by_vec)
+jj_summarize_dataframe(summarize_obj, summarize_by_vec, method = "mean")
 }
 \arguments{
-\item{summarize_obj}{list of ggplot objects}
+\item{summarize_obj}{sparse matrix, vector, or data.frame}
 
 \item{summarize_by_vec}{vector with group annotation, has to have length equal to ncol(sparse_mat)/nrow(data.frame)/length(vector)}
+
+\item{method}{method used to summarize. Only mode available for non-numeric vectors, sum/mean for sparse matrix and mode/mean/median for numeric vectors}
 
 \item{return_matrix}{return as matrix instead of sparse matrix}
 
@@ -42,7 +44,7 @@ jj_summarize_dataframe summarizes each column in a data.frame based on a group v
 }
 \examples{
 df = data.frame(a=seq(1,5), b=c('a','b','b','b','a'), d=c(3,0,0,1,5))
-jj_summarize_vector(df$d, df$b, type='mean')
+jj_summarize_vector(df$d, df$b, method='mean')
 jj_summarize_dataframe(df, df$b)
 }
 \keyword{summarize}
