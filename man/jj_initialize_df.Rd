@@ -4,7 +4,14 @@
 \alias{jj_initialize_df}
 \title{create data.frame of defined size with initial value in each cell}
 \usage{
-jj_initialize_df(ncol, nrow, init = NA, col.names = NULL, ...)
+jj_initialize_df(
+  ncol,
+  nrow,
+  init = NA,
+  col.names = NULL,
+  return_matrix = FALSE,
+  ...
+)
 }
 \arguments{
 \item{ncol}{number of columns}
@@ -14,6 +21,8 @@ jj_initialize_df(ncol, nrow, init = NA, col.names = NULL, ...)
 \item{init}{value to put into every cell}
 
 \item{col.names}{colnames to set}
+
+\item{return_matrix}{return matrix instead of data.frame, default=FALSE}
 
 \item{row.names}{rownames to set}
 }
