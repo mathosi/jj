@@ -10,13 +10,13 @@
 #' @examples
 #'
 
-j <- function(obj, headtail=NULL, print_nested=FALSE, show_max=5){
+j <- function(obj, headtail=NULL, print_nested=FALSE, show_max=3){
   if(!is.null(headtail)){
     headtail = as.integer(headtail)
     stopifnot(!is.na(headtail))
   }
   
-  check_vector = function(obj){
+  check_vector = function(obj, headtail=NULL){
     message(paste0("Vector of length ", length(obj)))
     if(!is.null(headtail)){
       stopifnot(is.integer(headtail))
@@ -25,7 +25,7 @@ j <- function(obj, headtail=NULL, print_nested=FALSE, show_max=5){
     return(head(obj, show_max))
   }  
   
-  check_matrix_data.frame = function(obj){
+  check_matrix_data.frame = function(obj, headtail=NULL){
     nrows = nrow(obj)
     ncols = ncol(obj)
     message(sprintf("%s with %i rows and %i columns", class(obj)[1], nrows, ncols))
@@ -37,7 +37,7 @@ j <- function(obj, headtail=NULL, print_nested=FALSE, show_max=5){
     return(obj[1:lookRows, 1:lookCols])
   }
   
-  check_DataFrame = function(obj){
+  check_DataFrame = function(obj, headtail=NULL){
     obj <- as.data.frame(obj)
     nrows = nrow(obj)
     ncols = ncol(obj)
