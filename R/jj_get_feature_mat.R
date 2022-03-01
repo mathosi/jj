@@ -11,10 +11,10 @@
 #' @examples
 #' mat_use = matrix(1:20, nrow=10, byrow=T)
 #' rownames(mat_use) = LETTERS[1:10]
-#' jj_get_features(mat_use, c('D','J','A'))
-#' jj_get_features(mat_use, c('D','J','A', 'Z'),  use_features_order=F)
+#' jj_get_feature_mat(mat_use, c('D','J','A'))
+#' jj_get_feature_mat(mat_use, c('D','J','A', 'Z'),  use_features_order=F)
 
-jj_get_features = function(feature_mat, features, fail_on_missing=FALSE, use_features_order=TRUE, verbose=TRUE){
+jj_get_feature_mat = function(feature_mat, features, fail_on_missing=FALSE, use_features_order=TRUE, verbose=TRUE){
   is.any.matrix = function(m){ is.matrix(m) | is.data.frame(m) | is(m, 'sparseMatrix') }
   
   stopifnot(is.character(features))
