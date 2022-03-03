@@ -27,8 +27,8 @@ jj_bind_features_with_dr_df <- function(obj, assay='RNA', slot='counts',
   if(class(obj) == 'Seurat'){
     obj = GetAssayData(obj, assay=assay, slot=slot)
   }
-  goi_df <- t(jj_get_feature_mat(obj,
-                             features = features))
+  goi_df <- t(as.matrix(jj_get_feature_mat(obj,
+                             features = features)))
   
   if(!all(features %in% colnames(goi_df))){
     stop(sprintf('%s not found in the assay.', paste(features[!features %in% colnames(goi_df)], collapse = ', ')))
