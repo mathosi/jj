@@ -10,8 +10,8 @@
 #' @param reduction either a data.frame with embeddings in column 1+2 and further meta data or a string specifying a dimensionality reduction from the Seurat object
 #' @param features If Seurat object is provided, extract features from the specified assay and slot
 #' @param meta_features if Seurat object is provided, extract features from the meta.data. Otherwise extract features from the data.frame provided in `reduction`
-#' @param assay assay to use from the Seurat object
-#' @param slot slot to use from the Seurat object
+#' @param assay assay to use from the Seurat object, default: DefaultAssay(seurat_obj)
+#' @param slot slot to use from the Seurat object, default: data
 #' @param colorScale color scale to use for continuous features, one of 'wbr', 'bry', 'seurat', 'viridis'
 #' @param cap_top upper value threshold passed to jj_cap_vals
 #' @param cap_bottom lower value threshold passed to jj_cap_vals
@@ -23,11 +23,12 @@
 #' @param return_gg_object return ggplot object instead of plotting, default: FALSE
 #' @param my_title optional title for the ggplot
 #' @param no_legend omit legend, default: FALSE
-#' @param use_facets either TRUE/FALSE: facet by the meta_feature, or a string specifying another meta_feature to facet by
+#' @param facet_by string specifying a meta_feature to facet by
 #' @param n_facet_rows number of rows for facetted plots
 #' @param cont_or_disc string of length 1 or length n features indicating whether the features are continuous 'c' or discrete 'd'. Try to set this manually, when the function fails. Otherwise, set to 'a' to automatically determine c or d for each feature.
 #' @param use_pointdensity colour by pointdensity using the ggpointdensity package. 
 #' @param pointdensity_subset Only used if use_pointdensity=T. If NULL, use all cells. If set to groups within meta_features, only calculate density for these subgroups
+#' @param facet_subset Only used when facet_by not FALSE. Only plot the facets for the groups supplied here. Background cells are still shown for the whole dataset 
 #' @param order order points so that largest values are on top
 #' @param background_cells when using facets, include the cells not part of the facet as grey background 
 #' @param label add boxes with labels to the discrete variable
@@ -37,24 +38,24 @@
 #' @examples
 #' df = data.frame(umap1=c(1,5,3), umap2=c(2,5,2), fruit=c('Apple', 'Banana', 'Apple'), dish=c('Salad','Salad','Snack'))
 #' jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, shape=15, my_title='fruits')
-#' jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, use_facets=T, n_facet_rows=2)
-#' jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, use_facets='dish')
+#' jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, facet_by='fruit', n_facet_rows=2)
+#' jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, facet_by='dish')
 #' jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, custom_colors=c(Apple='green', Banana='yellow'), label=T)
 #' jj_plot_features(seurat_rna, features=c('CD4', 'CD8A'), cap_top='q95', colorScale='viridis')
 #' df2 = data.frame(a=rnorm(100, 0, 5), b=rnorm(100, 0, 5), d=rbinom(100, 50, 0.3), e = sample(c('A','B', 'C'), 100, replace=T))
-#' jj_plot_features(reduction=df2, meta_features=c('d'), pt.size=4, use_facets = 'e', background_cells = T, order=T, custom_theme = theme_bw())
-#' jj_plot_features(reduction=df2, meta_features='e', pt.size=4, use_facets = 'e', use_pointdensity = T, order=T, custom_theme = theme_bw())
+#' jj_plot_features(reduction=df2, meta_features=c('d'), pt.size=4, facet_by = 'e', background_cells = T, order=T, custom_theme = theme_bw())
+#' jj_plot_features(reduction=df2, meta_features='e', pt.size=4, facet_by = 'e', use_pointdensity = T, order=T, custom_theme = theme_bw())
 #' jj_plot_features(reduction=df2, meta_features='e', pt.size=4, use_pointdensity = T, pointdensity_subset = c('B','C'), order=T, custom_theme = theme_bw())
 #' jj_plot_features(reduction=df2, meta_features='e', pt.size=4, use_pointdensity = T, pointdensity_subset = c('B','C'), background_cells=T, order=T, custom_theme = theme_bw())
 #'
 
 jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, meta_features=NULL,
-                             assay='RNA', slot='counts', 
+                             assay=NULL, slot='data', 
                              colorScale=c('viridis', 'wbr', 'gbr', 'bry', 'seurat'),
-                             use_facets=FALSE, cap_top=NULL,  cap_bottom=NULL, 
+                             facet_by=NULL, cap_top=NULL,  cap_bottom=NULL, 
                              custom_colors=NULL, custom_theme=theme_minimal(), shape = 16, alpha=1,
                              pt.size=0.5, return_gg_object=FALSE, my_title=NULL, 
-                             no_legend=F, n_facet_rows=NULL,
+                             no_legend=F, n_facet_rows=NULL, facet_subset=NULL,
                              cont_or_disc = 'a', use_pointdensity = FALSE,
                              pointdensity_subset=NULL, order=FALSE, 
                              background_cells=FALSE, label=FALSE, box_col=NULL, convert_factors=FALSE){
@@ -144,7 +145,10 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
   }
   
   if(!is.null(features)){
-    message('getting feature matrix')
+    if(is.null(assay)){
+      assay = DefaultAssay(seurat_obj)
+    }
+    message(sprintf('getting %s slot from %s assay of seurat object', slot, assay))
     if(!all(features %in% colnames(dr_df))){
       dr_df <- jj_bind_features_with_dr_df(seurat_obj, assay=assay, slot=slot, 
                                            features=features, dr_df=dr_df, cap_top=cap_top, 
@@ -200,12 +204,17 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
       dr_df = dr_df[order(dr_df[, goi[i]]), ]
     }
     
-    if(use_facets %in% colnames(dr_df) & background_cells){
-      fac_levels = unique(dr_df[, use_facets])
+
+    if(!is.null(facet_by) & background_cells){
+      stopifnot(facet_by %in% colnames(dr_df))
+      fac_levels = unique(dr_df[, facet_by])
+      if(!is.null(facet_subset[1])){
+        fac_levels = fac_levels[fac_levels %in% facet_subset]
+      }
       dr_df_background_list = list()
       for(ii in seq_along(fac_levels)){
         dr_df_background_list[[ii]] = dr_df
-        dr_df_background_list[[ii]][, use_facets] = fac_levels[ii]
+        dr_df_background_list[[ii]][, facet_by] = fac_levels[ii]
       }
       dr_df_background = do.call(rbind, dr_df_background_list)
       rm(dr_df_background_list)
@@ -216,6 +225,13 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
         geom_point(data = dr_df, aes(x=dim_1, y=dim_2), size=pt.size, alpha=alpha, color='grey80')
     }else{
       gg = NULL
+    }
+    
+    if(!is.null(facet_by) & !is.null(facet_subset[1])){
+      dr_df = dr_df[dr_df[, facet_by] %in% facet_subset, ]
+      if(!nrow(dr_df) > 0){
+        stop('Groups in `facet_subset` are not available in `facet_by`')
+      }
     }
     
     if(use_pointdensity){
@@ -333,25 +349,25 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
       }
     }
     
-    if(!is.logical(use_facets)){
-      if(use_facets %in% colnames(dr_df) & n_distinct(dr_df[, use_facets]) < 30){
-        message(sprintf('Facetting by %s.', use_facets))
+    if(!is.null(facet_by)){
+      if(facet_by %in% colnames(dr_df) & n_distinct(dr_df[, facet_by]) < 30){
+        message(sprintf('Facetting by %s.', facet_by))
         if(is.null(n_facet_rows)){
-          n_facet_rows <- round(sqrt(n_distinct(dr_df[, use_facets])))
+          n_facet_rows <- round(sqrt(n_distinct(dr_df[, facet_by])))
         }
-        gg <- gg + facet_wrap(as.formula(sprintf('.~%s', use_facets)), nrow=n_facet_rows)
+        gg <- gg + facet_wrap(as.formula(sprintf('.~%s', facet_by)), nrow=n_facet_rows)
       }
     }
-    if(use_facets %in% c(TRUE, 1)){
-      if(use_facets & n_distinct(dr_df[, goi[i]]) < 100){
-        message(sprintf('Facetting by %s.', goi[i]))
-        if(is.null(n_facet_rows)){
-          n_facet_rows <- round(sqrt(n_distinct(dr_df[, goi[i]])))
-        }
-        if(!is.logical(use_facets)) print(gg) #print unfacetted + facetted if use_facets <- 1 is used
-        gg <- gg + facet_wrap(as.formula(sprintf('.~%s', goi[i])), nrow=n_facet_rows)
-      }
-    }
+    # if(facet_by %in% c(TRUE, 1)){
+    #   if(facet_by & n_distinct(dr_df[, goi[i]]) < 100){
+    #     message(sprintf('Facetting by %s.', goi[i]))
+    #     if(is.null(n_facet_rows)){
+    #       n_facet_rows <- round(sqrt(n_distinct(dr_df[, goi[i]])))
+    #     }
+    #     if(!is.logical(facet_by)) print(gg) #print unfacetted + facetted if facet_by <- 1 is used
+    #     gg <- gg + facet_wrap(as.formula(sprintf('.~%s', goi[i])), nrow=n_facet_rows)
+    #   }
+    # }
     
     if(label & cont_or_disc[i] == 'd'){
       gg$data[, goi[i]] = as.factor(gg$data[, goi[i]])
