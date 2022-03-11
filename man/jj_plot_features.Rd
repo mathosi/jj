@@ -9,10 +9,10 @@ jj_plot_features(
   reduction = NULL,
   features = NULL,
   meta_features = NULL,
-  assay = "RNA",
-  slot = "counts",
+  assay = NULL,
+  slot = "data",
   colorScale = c("viridis", "wbr", "gbr", "bry", "seurat"),
-  use_facets = FALSE,
+  facet_by = NULL,
   cap_top = NULL,
   cap_bottom = NULL,
   custom_colors = NULL,
@@ -24,6 +24,7 @@ jj_plot_features(
   my_title = NULL,
   no_legend = F,
   n_facet_rows = NULL,
+  facet_subset = NULL,
   cont_or_disc = "a",
   use_pointdensity = FALSE,
   pointdensity_subset = NULL,
@@ -43,13 +44,13 @@ jj_plot_features(
 
 \item{meta_features}{if Seurat object is provided, extract features from the meta.data. Otherwise extract features from the data.frame provided in \code{reduction}}
 
-\item{assay}{assay to use from the Seurat object}
+\item{assay}{assay to use from the Seurat object, default: DefaultAssay(seurat_obj)}
 
-\item{slot}{slot to use from the Seurat object}
+\item{slot}{slot to use from the Seurat object, default: data}
 
 \item{colorScale}{color scale to use for continuous features, one of 'wbr', 'bry', 'seurat', 'viridis'}
 
-\item{use_facets}{either TRUE/FALSE: facet by the meta_feature, or a string specifying another meta_feature to facet by}
+\item{facet_by}{string specifying a meta_feature to facet by}
 
 \item{cap_top}{upper value threshold passed to jj_cap_vals}
 
@@ -72,6 +73,8 @@ jj_plot_features(
 \item{no_legend}{omit legend, default: FALSE}
 
 \item{n_facet_rows}{number of rows for facetted plots}
+
+\item{facet_subset}{Only used when facet_by not FALSE. Only plot the facets for the groups supplied here. Background cells are still shown for the whole dataset}
 
 \item{cont_or_disc}{string of length 1 or length n features indicating whether the features are continuous 'c' or discrete 'd'. Try to set this manually, when the function fails. Otherwise, set to 'a' to automatically determine c or d for each feature.}
 
@@ -97,13 +100,13 @@ Loads ggplot2 and dplyr libraries.
 \examples{
 df = data.frame(umap1=c(1,5,3), umap2=c(2,5,2), fruit=c('Apple', 'Banana', 'Apple'), dish=c('Salad','Salad','Snack'))
 jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, shape=15, my_title='fruits')
-jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, use_facets=T, n_facet_rows=2)
-jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, use_facets='dish')
+jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, facet_by='fruit', n_facet_rows=2)
+jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, facet_by='dish')
 jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, custom_colors=c(Apple='green', Banana='yellow'), label=T)
 jj_plot_features(seurat_rna, features=c('CD4', 'CD8A'), cap_top='q95', colorScale='viridis')
 df2 = data.frame(a=rnorm(100, 0, 5), b=rnorm(100, 0, 5), d=rbinom(100, 50, 0.3), e = sample(c('A','B', 'C'), 100, replace=T))
-jj_plot_features(reduction=df2, meta_features=c('d'), pt.size=4, use_facets = 'e', background_cells = T, order=T, custom_theme = theme_bw())
-jj_plot_features(reduction=df2, meta_features='e', pt.size=4, use_facets = 'e', use_pointdensity = T, order=T, custom_theme = theme_bw())
+jj_plot_features(reduction=df2, meta_features=c('d'), pt.size=4, facet_by = 'e', background_cells = T, order=T, custom_theme = theme_bw())
+jj_plot_features(reduction=df2, meta_features='e', pt.size=4, facet_by = 'e', use_pointdensity = T, order=T, custom_theme = theme_bw())
 jj_plot_features(reduction=df2, meta_features='e', pt.size=4, use_pointdensity = T, pointdensity_subset = c('B','C'), order=T, custom_theme = theme_bw())
 jj_plot_features(reduction=df2, meta_features='e', pt.size=4, use_pointdensity = T, pointdensity_subset = c('B','C'), background_cells=T, order=T, custom_theme = theme_bw())
 
