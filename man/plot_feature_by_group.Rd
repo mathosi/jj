@@ -6,7 +6,7 @@
 \alias{jj_plot_sparse_by_group}
 \alias{jj_plot_numeric_by_group}
 \alias{jj_plot_categorical_by_group}
-\title{Load/save excel workbooks using openxlsx library}
+\title{violin plot of feature by group}
 \usage{
 jj_plot_sparse_by_group_seurat(
   seurat_obj,
@@ -96,7 +96,7 @@ jj_plot_categorical_by_group(
 \item{return_df}{if TRUE, instead of plotting, return the data.frame with the data}
 }
 \description{
-load excel workbook as list of data.frames or save list of data.frames as excel
+Plot a gene/numeric/categorical feature by group as violin or boxplot
 }
 \examples{
 

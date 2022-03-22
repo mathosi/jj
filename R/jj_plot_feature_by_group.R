@@ -1,6 +1,6 @@
-#' Load/save excel workbooks using openxlsx library
+#' violin plot of feature by group
 #'
-#' load excel workbook as list of data.frames or save list of data.frames as excel
+#' Plot a gene/numeric/categorical feature by group as violin or boxplot
 #'
 #' @name plot_feature_by_group 
 #' @param df data.frame containing the columns passed in feature_column and group_column
