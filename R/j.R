@@ -10,7 +10,7 @@
 #' @examples
 #'
 
-j <- function(obj, headtail=NULL, print_nested=FALSE, show_max=3){
+j <- function(obj, show_max=3, headtail=NULL, print_nested=FALSE){
   if(!is.null(headtail)){
     headtail = as.integer(headtail)
     stopifnot(!is.na(headtail))

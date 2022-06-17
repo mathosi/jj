@@ -74,6 +74,22 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
   library(ggplot2)
   library(dplyr)
   
+  gg_list <- list()
+  message('getting reduction coordinates')
+  colorScale <- match.arg(colorScale)
+  if(is.data.frame(reduction) | is.matrix(reduction)){
+    dr_df <- as.data.frame(reduction)
+  }else{
+    dr_df <- jj_get_reduction_coords(seurat_obj, reduction, exact_match = TRUE)
+  }
+  stopifnot(all(apply(dr_df[, c(1,2)], 2, is.numeric))) #first two columns should be pc/umap coordinates
+  colnames(dr_df)[1:2] <- c('dim_1', 'dim_2')
+  
+  if(is.null(features) & is.null(meta_features)){
+    meta_features = 'data'
+    dr_df$data = ''
+  }
+  
   cont_or_disc <- unlist(strsplit(cont_or_disc, split = ''))
   if(length(cont_or_disc) == 1){
     cont_or_disc <- rep(cont_or_disc, length(c(features, meta_features)))
@@ -82,17 +98,6 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
   }else if(any(!cont_or_disc %in% c('c', 'd', 'a'))){
     stop('cont_or_disc can only be c, d, a: continuous, discrete, automatic')
   }
-  
-  gg_list <- list()
-  message('getting reduction coordinates')
-  colorScale <- match.arg(colorScale)
-  if(is.data.frame(reduction)){
-    dr_df <- reduction
-  }else{
-    dr_df <- jj_get_reduction_coords(seurat_obj, reduction, exact_match = TRUE)
-  }
-  stopifnot(all(apply(dr_df[, c(1,2)], 2, is.numeric))) #first two columns should be pc/umap coordinates
-  colnames(dr_df)[1:2] <- c('dim_1', 'dim_2')
   
   if(!is.null(meta_features)){
     message('Getting features from metadata')
@@ -350,7 +355,7 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
     }
     
     if(!is.null(facet_by)){
-      if(facet_by %in% colnames(dr_df) & n_distinct(dr_df[, facet_by]) < 30){
+      if(facet_by %in% colnames(dr_df) & n_distinct(dr_df[, facet_by]) < 100){
         message(sprintf('Facetting by %s.', facet_by))
         if(is.null(n_facet_rows)){
           n_facet_rows <- round(sqrt(n_distinct(dr_df[, facet_by])))

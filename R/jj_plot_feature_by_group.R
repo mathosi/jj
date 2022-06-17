@@ -134,6 +134,9 @@ jj_plot_sparse_by_group = function(rna_mat, gene_plot, group_vec, x_lab='Group',
   }
   
   if(!is.null(custom_colors)){
+    if(!is.null(names(custom_colors)) & is.factor(data_df$x)){
+      custom_colors = custom_colors[match(levels(data_df$x), names(custom_colors))]
+    }
     gg = gg + scale_fill_manual(values=custom_colors)
   }
   
@@ -217,6 +220,17 @@ jj_plot_categorical_by_group = function(df, feature_column, group_column, custom
   #barplot of fractions by group, eg immune cell subtypes by tissue
   #jj_plot_categorical_by_group(dr_df, 'singler_label', 'Tissue')
   #jj_plot_categorical_by_group(seurat_rna@meta.data, 'Gender', 'clinical', absolute_numbers=T)
+  summarise_fractions = function(df, summarise_by){
+    summary_df = df %>% 
+      dplyr::group_by(!!sym(summarise_by)) %>% 
+      dplyr::mutate(total=n()) %>% 
+      dplyr::group_by_all() %>% 
+      dplyr::summarise(ncells= n()) %>% 
+      dplyr::mutate(fraction=ncells/total) %>% 
+      dplyr::ungroup() %>% 
+      dplyr::arrange(!!sym(summarise_by))
+    return(summary_df)
+  }
   summary_df = summarise_fractions(df[, c(group_column, feature_column)],
                                    summarise_by = group_column)
   total_cells = sum(summary_df$ncells)

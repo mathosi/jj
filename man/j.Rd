@@ -4,7 +4,7 @@
 \alias{j}
 \title{print small subset of R object as overview}
 \usage{
-j(obj, headtail = NULL, print_nested = FALSE, show_max = 3)
+j(obj, show_max = 3, headtail = NULL, print_nested = FALSE)
 }
 \arguments{
 \item{obj}{Object, for which an overview is desired}

@@ -17,7 +17,7 @@ jj_summarize_sparse_mat(
 jj_summarize_vector(
   summarize_obj,
   summarize_by_vec,
-  type = "mean",
+  method = "mean",
   order = T,
   return_vec = F
 )

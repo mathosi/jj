@@ -20,6 +20,6 @@ jj_list_to_df = function(flist, long=TRUE, fill_with=NA){
     eq_sets_length_list <- lapply(flist, function(x) c(x, rep(fill_with, max(sets_length) - length(x))))
     df <- as.data.frame(do.call(cbind, eq_sets_length_list))
   }
-  df = unrowname(df)
+  rownames(df) = NULL
   return(df)
 }

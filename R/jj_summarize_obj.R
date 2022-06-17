@@ -46,12 +46,12 @@ jj_summarize_sparse_mat <- function(summarize_obj, summarize_by_vec, method='mea
 
 #' @rdname summarise_vals
 #' @export
-jj_summarize_vector = function(summarize_obj, summarize_by_vec, type='mean', order=T, return_vec=F){
+jj_summarize_vector = function(summarize_obj, summarize_by_vec, method='mean', order=T, return_vec=F){
   stopifnot((is.vector(summarize_obj) | is.factor(summarize_obj)) & (is.vector(summarize_by_vec) | is.factor(summarize_by_vec)))
   options(dplyr.summarise.inform = FALSE)
-  type = match.arg(type, choices = c('mode','mean','median'))
+  method = match.arg(method, choices = c('mode','mean','median','count'))
   df = data.frame(a=summarize_obj, b=summarize_by_vec)
-  if(type=='mode'){
+  if(method=='mode'){
     df <- df %>% 
       dplyr::group_by_all() %>% 
       dplyr::summarise(nr_cells=n()) %>% 
@@ -60,16 +60,21 @@ jj_summarize_vector = function(summarize_obj, summarize_by_vec, type='mean', ord
       dplyr::filter(nr_cells == max(nr_cells)) %>% 
       .[!duplicated(.$b), ] %>% 
       dplyr::select(-nr_cells)
-  }else if(type=='mean'){
+  }else if(method=='mean'){
     df <- df %>% 
       dplyr::group_by(b) %>% 
       dplyr::summarise(a=mean(a, na.rm=T)) %>% 
       dplyr::select(a, b)
-  }else if(type == 'median'){
+  }else if(method == 'median'){
     df <- df %>% 
       dplyr::group_by(b) %>% 
       dplyr::summarise(a=median(a, na.rm=T)) %>% 
       dplyr::select(a, b)
+  }else if(method == 'count'){
+    df <- df %>% 
+      dplyr::group_by_all() %>% 
+      dplyr::summarise(count=n()) 
+    return(df)
   }
   if(order){
     df = df %>% dplyr::arrange(b)
@@ -97,10 +102,10 @@ jj_summarize_dataframe = function(summarize_obj, summarize_by_vec, method = 'mea
   for(i in 1:ncol(summarize_df)){
     if(class(summarize_df[, i]) %in% c('numeric','integer')){
       message(sprintf('%i/%i: Summarize %s by %s', i, ncol(summarize_df), colnames(summarize_df[i]), method))
-      sdf[, i]  = jj_summarize_vector(summarize_df[, i], summarize_by_vec, type=method, order = T, return_vec = T)
+      sdf[, i]  = jj_summarize_vector(summarize_df[, i], summarize_by_vec, method=method, order = T, return_vec = T)
     }else{
       message(sprintf('%i/%i: Summarize %s by mode', i, ncol(summarize_df), colnames(summarize_df[i])))
-      sdf[, i] = jj_summarize_vector(summarize_df[, i], summarize_by_vec, type='mode', order = T, return_vec = T)
+      sdf[, i] = jj_summarize_vector(summarize_df[, i], summarize_by_vec, method='mode', order = T, return_vec = T)
     }
   }
   return(sdf)
