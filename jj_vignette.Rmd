@@ -1,0 +1,430 @@
+---
+title: "jj vignette"
+output:
+  html_document:
+    df_print: paged
+---
+
+Overview of applications of the different functions in the jj package.
+
+```{r include=F}
+#include: neither code nor results are displayed
+#echo: do not show code, but results are shown
+#message: do not show code messages
+#warning: do not show warning
+library(jj)
+library(tidyverse)
+library(Seurat)
+library(GenomicRanges)
+```
+
+
+## ggplot functions
+
+**jj_plot_features**: Similar to FeaturePlot/DimPlot from Seurat, but with extended functionality.
+
+```{r message=F, warning = F}
+df = data.frame(umap1=c(1,5,3), umap2=c(2,5,2), fruit=c('Apple', 'Banana', 'Apple'), dish=c('Salad','Salad','Snack'))
+jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, shape=15, my_title='fruits')
+jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, facet_by='fruit', n_facet_rows=2)
+jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, facet_by='dish')
+jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, custom_colors=c(Apple='green', Banana='yellow'), label=T)
+```
+
+
+```{r message = F, warning = F}
+jj_plot_features(seurat_obj = pbmc_small, reduction='tsne', features=c('CD79A', 'CD79B'), cap_top='auto', colorScale='wbr', pt.size = 4)
+```
+
+Visualizing number of nearest neighbours instead of feature value, optionally including background cells
+```{r message = F, warning = F}
+df2 = data.frame(a=rnorm(100, 0, 5), b=rnorm(100, 0, 5), d=rbinom(100, 50, 0.3), e = sample(c('A','B', 'C'), 100, replace=T))
+jj_plot_features(reduction=df2, meta_features=c('d'), pt.size=4, facet_by = 'e', background_cells = T, order=T, custom_theme = theme_bw())
+jj_plot_features(reduction=df2, meta_features='e', pt.size=4, facet_by = 'e', use_pointdensity = T, order=T, custom_theme = theme_bw())
+jj_plot_features(reduction=df2, meta_features='e', pt.size=4, use_pointdensity = T, pointdensity_subset = c('B','C'), order=T, custom_theme = theme_bw())
+jj_plot_features(reduction=df2, meta_features='e', pt.size=4, use_pointdensity = T, pointdensity_subset = c('B','C'), background_cells=T, order=T, custom_theme = theme_bw())
+
+```
+
+**jj_plot_numeric_by_group**: plot a numeric feature by a grouping variable in a data.frame (eithe boxplot or violin)
+
+**jj_get_colours**: read in colours from a csv file or select colours from a data.frame
+
+**jj_get_jj_colours**: use a predefined colour palette to colour the different groups in the data
+
+
+```{r}
+#not all groups need to be present in the actual data
+my_colour_df = data.frame(group = c('g1', 'g2','g3'), colour = c('lightblue', '#00EE11', 'orange'))
+#colour_csv can be either data.frame or path to two column csv with annotation in first column and colour in second column
+cols_use = jj_get_colours(pbmc_small$groups, colour_csv = my_colour_df)
+print(cols_use)
+jj_plot_numeric_by_group(pbmc_small@meta.data, feature_column = 'nFeature_RNA', group_column = 'groups',
+                         custom_colors = cols_use, plot_mean = T, plot_cell_sample = T,
+                         plot_group_size = T, type = 'boxplot')
+
+jj_plot_numeric_by_group(pbmc_small@meta.data, feature_column = 'nFeature_RNA', group_column = 'groups',
+                         custom_colors = jj_get_jj_colours(pbmc_small$groups),
+                         plot_group_size = T, type = 'violin')
+```
+
+**jj_plot_sparse_by_group**: plot a sparse feature (eg. scRNA gene expression) by group as violin or boxplot. Can additionally show the fraction of cells expressing the feature as piechart below the groups
+**jj_plot_sparse_by_group_seurat**: wrapper function for Seurat objects
+
+```{r warning=F, message=F}
+#this works with every matrix
+ass_df = GetAssayData(pbmc_small)
+jj_plot_sparse_by_group(ass_df, gene_plot = 'CD79A', group_vec = pbmc_small$groups,
+                        plot_zero_fraction = T, plot_mean = T, plot_cell_sample = T, plot_group_size = T)
+
+#more convenient function for Seurat (just a wrapper for the function above)
+jj_plot_sparse_by_group_seurat(seurat_obj = pbmc_small, gene_plot = 'CD79A', group_column = 'groups',
+                        plot_mean = F, plot_cell_sample = F, plot_group_size = T, plot_zero_fraction = T,
+                        order = TRUE, custom_colors = jj_get_jj_colours(pbmc_small$groups))
+```
+
+**jj_plot_categorical_by_group**: plot a categorical variable count by another categorical grouping variable
+
+```{r}
+jj_plot_categorical_by_group(pbmc_small@meta.data, feature_column = 'RNA_snn_res.1', group_column = 'groups', absolute_numbers = T, flip_coordinates = T)
+```
+
+**jj_arrange_ggplots**: arrange multiple ggplots stored in a list in a common grid
+
+```{r jj_arrange_ggplots, message=FALSE, warning=FALSE}
+df = data.frame(a=rnorm(100, 0, 5), b=rnorm(100, 0, 5), d=rbinom(100, 50, 0.3), e = sample(c('A','B', 'C'), 100, replace=T))
+ggl = list()
+ggl[[1]] = ggplot(df, aes(x = a, y = b, colour=d)) + geom_point()
+ggl[[2]] = ggplot(df, aes(x = a, y = b, colour=e)) + geom_point()
+ggl[[3]] = ggplot(df, aes(x = a)) + geom_histogram()
+r = jj_arrange_ggplots(ggl, nplots = 4, cols = 2)
+r$`1`
+r = jj_arrange_ggplots(ggl, nplots = 4, cols = 2, legend.pos = 'none')
+r$`1`
+```
+
+```{r}
+marker_df = FindMarkers(pbmc_small, group.by = 'groups', ident.1 = 'g1', ident.2 = 'g2')
+marker_df$symbol = rownames(marker_df)
+#simple scatterplot
+jj_volcano_plot(marker_df, logfc_column = 'avg_log2FC', pval_column = 'p_val', labs_range = NULL, marker_thres = Inf) +
+  theme(legend.position = 'none')
+#colour highlighting above a threshold and capping very high and low values, adding lines for the threshold
+jj_volcano_plot(marker_df, logfc_column = 'avg_log2FC', pval_column = 'p_val', labs_range = c(-2,2), marker_thres = 1.5, add_thres_line=T)
+#adding text to highlighted markers, possibility to show unbalanced x axis
+jj_volcano_plot(marker_df, logfc_column = 'avg_log2FC', pval_column = 'p_val',
+                symbol_column = 'symbol', use_text = T, labs_range = c(-2,4), marker_thres = 2)
+#instead of highlighting everything above/below a threshold, specific markers can be highlighted
+jj_volcano_plot(marker_df, logfc_column = 'avg_log2FC', pval_column = 'p_val', symbol_column = 'symbol',
+                labs_range = c(-2.5, 2.5), marker_thres = 4,
+                markers_highlight = c('FUOM','NRBP1','TAF7'), pt.size = 1.5,
+                only_highlight = F, col_by_highlight = T)
+#specific highlighting and general highlighting can be combined
+jj_volcano_plot(marker_df, logfc_column = 'avg_log2FC', pval_column = 'p_val', symbol_column = 'symbol',
+                labs_range = c(-2.5, 2.5), marker_thres = 2,
+                markers_highlight = c('FUOM','NRBP1','TAF7'), pt.size = 1.5, highlight.pt.size = 3,
+                only_highlight = F, col_by_highlight = F)
+#only show highlighted markers
+jj_volcano_plot(marker_df, logfc_column = 'avg_log2FC', pval_column = 'p_val', symbol_column = 'symbol',
+                labs_range = c(-2.5, 2.5), marker_thres = 2,
+                markers_highlight = c('FUOM','NRBP1','TAF7'), pt.size = 1.5,
+                only_highlight = T, col_by_highlight = F)
+#to change colour and size of highlighted markers use `highlight.pt.size` and `markers_highlight_cols`
+jj_volcano_plot(marker_df, logfc_column = 'avg_log2FC', pval_column = 'p_val', symbol_column = 'symbol',
+                labs_range = c(-4, 4), marker_thres = Inf,
+                markers_highlight = c('FUOM','NRBP1','TAF7'), pt.size = 1.5, highlight.pt.size = 3,
+                only_highlight = F, col_by_highlight =T,
+                markers_highlight_col = structure(c('red','orange','red'), names=c('FUOM','NRBP1','TAF7'))) + theme(legend.position='none')
+
+marker_df2 = FindMarkers(pbmc_small, group.by = 'RNA_snn_res.1', ident.1 = '0', ident.2 = '1')
+marker_df2$symbol = rownames(marker_df2)
+markers_joined = dplyr::inner_join(marker_df, marker_df2, by = 'symbol')
+# simple logFC-logFC plot with highlighting above |avg_log2FC| = 1
+jj_fc_fc_plot(plot_df = markers_joined, logfc_column1 = 'avg_log2FC.x', logfc_column2 = 'avg_log2FC.y',
+              marker_thres = 1, labs_range = NULL)
+# adding range to plot and text to markers, also adding threshold lines
+jj_fc_fc_plot(markers_joined, logfc_column1 = 'avg_log2FC.x', logfc_column2 = 'avg_log2FC.y',symbol_column = 'symbol',
+              labs_range = c(-4,4, -4,4), marker_thres = 2, use_text = T, add_thres_line = T)
+#specifying custom highlight
+jj_fc_fc_plot(markers_joined, logfc_column1 = 'avg_log2FC.x', logfc_column2 = 'avg_log2FC.y',symbol_column = 'symbol',
+              labs_range = c(-4,4, -4,4), marker_thres = 2, use_text = T,
+              markers_highlight = c('RGS1','GLNY','GRN'), col_by_highlight = T)
+#changing colour and size of custom highlight
+jj_fc_fc_plot(markers_joined, logfc_column1 = 'avg_log2FC.x', logfc_column2 = 'avg_log2FC.y',symbol_column = 'symbol',
+              labs_range = c(-4,4, -4,4), marker_thres = Inf, use_text = T,
+             markers_highlight = c('RGS1','GLNY','GRN'), col_by_highlight = T,highlight.pt.size = 3,
+              markers_highlight_col = structure(rep('orange',3), names=c('RGS1','GLNY','GRN')))
+
+```
+
+```{r}
+pbmc_small$sample = sample(1:3, ncol(pbmc_small), replace = T)
+jj_plot_stacked_barplot(df = pbmc_small[[]], group_column = 'groups', 
+                         value_column = 'RNA_snn_res.1', sample_column = 'sample', 
+                         show_error_bars = T, show_fraction = T, 
+                         error_bar_color = 'black')
+
+jj_plot_stacked_barplot(df = pbmc_small[[]], group_column = 'groups', 
+                         value_column = 'RNA_snn_res.1', sample_column = 'sample', 
+                         show_error_bars = T, show_fraction = F, 
+                         custom_colors = jj_get_jj_colours(levels(pbmc_small$RNA_snn_res.1)))
+
+```
+
+```{r}
+#make some example data: 10 samples, 4 healthy donors and 3 patients. From each patients, values are available from
+#two timepoints: diagnosis and relapse. We want to quantify the difference in a `Disease_score` between Healthy, Diagnosis and 
+#relapse state on the sample level (not on single-cell level). Both paired (Diagnosis - Relapse) and unpaired
+#(Healthy-Diagnosis, Healthy-Relapse) comparisons need to be performed.
+data_df = data.frame(Sample = rep(1:10, each = 10),
+                      Donor = c(rep(c('Healthy1','Healthy2','Healthy3','Healthy4'), each=10), rep(c('Disease1','Disease2','Disease3'), each=20)),
+                      Group = c(rep('Healthy', 40), rep(rep(c('Diagnosis','Relapse'), each=10), 3)),
+                      Disease_score = c(rnorm(40, mean = 3, sd = 0.5),  rnorm(20, mean = 4, sd = 0.1),
+                                        rnorm(10, mean = 6, sd = 0.1), rnorm(10, mean = 4.5, sd = 0.1),
+                                        rnorm(10, mean = 4.5, sd = 0.1), rnorm(10, mean = 3, sd = 0.1)))
+#plot the data per group as violins
+gg = jj_plot_numeric_by_group(data_df, feature_column = 'Disease_score', group_column = 'Group')
+gg
+#get mean score per sample
+sample_df = jj_get_pval_df(data_df,
+                       sample_column = 'Sample',
+                       donor_column =  'Donor',
+                       group_column = 'Group',
+                       score_column =  'Disease_score',
+                       return_per_sample_df = T)
+#i.e. comparisons which are calculated in the function 'get_pval_df'
+wilcox.test(x=sample_df$score[sample_df$group == 'Healthy'], 
+             y=sample_df$score[sample_df$group == 'Diagnosis'],
+             paired = F)
+wilcox.test(x=sample_df$score[sample_df$group == 'Relapse'], 
+             y=sample_df$score[sample_df$group == 'Diagnosis'],
+             paired = T)
+#get the full pvalue tibble
+pval_df = jj_get_pval_df(data_df,
+                       sample_column = 'Sample',
+                       donor_column =  'Donor',
+                       group_column = 'Group',
+                       score_column =  'Disease_score',
+                       comparisons_paired = list(c('Diagnosis','Relapse')),
+                       comparisons_unpaired = list(c('Healthy', 'Diagnosis'), c('Healthy', 'Relapse')),
+                       )
+pval_df
+#add suitable y positions for p value visualization in the violin plot
+pval_df$ypos = c(7, 6.5, 6.75)
+#plot everything together
+gg + geom_point(data = sample_df, mapping = aes(x = group, y = score, colour=donor), size=3) + 
+   scale_colour_manual(values=jj_get_jj_colours(sample_df$donor)) +
+   ggpubr::stat_pvalue_manual(data = pval_df, label='p_val_adj',
+                                 tip.length = 0.01,
+                                 y.position = 'ypos') 
+```
+
+```{r}
+#Option 1: Compare correlation of graph-based clusters based on RNA counts
+pbmc_small = ScaleData(pbmc_small, features = rownames(pbmc_small))
+scaled_rna = GetAssayData(pbmc_small, assay='RNA', slot='scale.data')
+jj_cluster_correlation_heatmap(scaled_mat_a = scaled_rna,
+                               group_a = as.character(pbmc_small$RNA_snn_res.1))
+jj_cluster_correlation_heatmap(scaled_mat_a = scaled_rna,
+                               group_a = as.character(pbmc_small$RNA_snn_res.1),
+                               plot_triangular=TRUE)
+#Option2: Dummy example, the idea is to compare clusters from a second dataset                              
+pbmc_subset = pbmc_small[sample(1:nrow(pbmc_small), 100, replace = F), sample(1:ncol(pbmc_small), 50, replace = F)]
+pbmc_subset = ScaleData(pbmc_subset, features = rownames(pbmc_subset))
+scaled_rna2 = GetAssayData(pbmc_subset, assay='RNA', slot='scale.data')
+jj_cluster_correlation_heatmap(scaled_mat_a = scaled_rna,
+                               group_a = as.character(pbmc_small$RNA_snn_res.1),
+                               scaled_mat_b = scaled_rna2,
+                               group_b = as.character(pbmc_subset$RNA_snn_res.1))
+
+```
+
+```{r}
+#' #e.g. PC2 has positive correlation with the grouping from RNA_snn_res.1
+pca_scores = Embeddings(pbmc_small, 'pca')[,1:10]
+jj_metadata_association_heatmap(score_mat = pca_scores, metadat_mat = pbmc_small[[]],
+                                cor_cutoff = 0)
+# Groups 1 and 2 tend to have high scores and group 0 has low scores for PC2
+jj_association_heatmap(scores_mat = pca_scores, group_vec = pbmc_small$RNA_snn_res.1)
+# confirm by plotting the data
+jj_plot_features(pbmc_small, reduction = 'pca', meta_features = 'RNA_snn_res.1', pt.size = 2)
+
+
+
+```
+
+Density lines
+```{r}
+dr_df = data.frame(dim1 = c(rnorm(500, 3, 0.5), rnorm(200, 4, 0.1)),
+                   dim2 = c(rnorm(500, 3, 0.5), rnorm(100, 4, 1), rnorm(100, 3.5, 1)),
+                   group = rep(LETTERS[1:2], c(500,200)))
+cont_l = jj_get_contour_lines(reduction_df = dr_df, grouping_var = 'group', cont_thres = 0.75)
+gg = jj_plot_features(reduction = dr_df, meta_features = 'group', return_gg_object = T)
+gg[[1]] + geom_path(data = cont_l,
+                    aes(x=x, y=y, group=cont_group, linetype=group, colour=group),
+                    size=1) + 
+  labs(linetype='')
+```
+
+
+**jj_plot_histogram_w0**
+```{r}
+fvec = jj_bind_features_with_dr_df(pbmc_small, assay='RNA', slot = 'data', features = 'RARRES3')[, 1]
+jj_plot_hist_wo0(feature_vec = fvec, title = 'RARRES3 expression', thres = 5, xlab = 'normalized counts')
+```
+
+```{r}
+true_label = c('A','A','A','B','B','B')
+predicted_label = c('A','B','B','B','B','B')
+#percentage of each category in vector_a that has a certain category in vector_b 
+jj_plot_confusion_matrix(vector_a = true_label, vector_b = predicted_label,
+                         xlab_text = 'true value', ylab_text = 'predicted value', 
+                         plot_numbers = T, text_size = 10)
+# absolute
+jj_plot_confusion_matrix(vector_a = true_label, vector_b = predicted_label,
+                         xlab_text = 'true value', ylab_text = 'predicted value', 
+                         plot_numbers = T, text_size = 10, plot_absolute = T)
+```
+
+# Seurat/ArchR/sparseMatrix functions
+
+**jj_get_reduction_coords**: obtain the first two dimensions of a reduction object from Seurat/ArchR and bind it to a data.frame together with the objects meta data
+
+**jj_bind_features_with_dr_df**: add rows from a matrix/sparseMatrix/Seurat assay to a data.frame containing metadata (df)
+
+
+```{r}
+#get the tsne coordinates from the pbmc_small object and add them in the first two columns of the objects meta.data
+reduction_df = jj_get_reduction_coords(pbmc_small, redname = 'tsne')
+head(reduction_df)
+#add some features to the data.frame from the gene expression matrix of the Seurat object
+#optionally cap the values at a fixed number or quantile
+reduction_df = jj_bind_features_with_dr_df(df = reduction_df, obj = pbmc_small, assay='RNA', slot='data', features=c('CD79A','CD79B'), cap_top='q99')
+head(reduction_df) #the data.frame now contains two additional columns with the normalized expression values
+
+#if df is string, get the dim1+2 from the respective reduction of the Seurat object passed in obj and bind it with the meta.data and requested features
+reduction_df = jj_bind_features_with_dr_df(obj = pbmc_small, features = c('CD79A','CD79B'), df = 'tsne')
+head(reduction_df)
+
+#if df = NULL, just return the requested features from the assay
+fmat = jj_bind_features_with_dr_df(obj = pbmc_small, assay='RNA', slot='data', features=c('CD79A','CD79B'), df = NULL)
+head(fmat)
+
+#plot the result
+jj_plot_features(reduction = reduction_df, meta_features = 'CD79A', cont_or_disc = 'c', pt.size = 2)
+```
+
+**jj_get_feature_mat**: obtain a subset of features from a larger matrix, optionally failing on missing features or ordering by the order of the requested features
+
+```{r}
+ass_df = GetAssayData(pbmc_small)
+j(jj_get_feature_mat(feature_mat = ass_df, features = c('CD79B', 'CD4', 'CD79A'), fail_on_missing = F, use_features_order = T))
+```
+
+# data summarization
+
+**jj_summarize_vector**: summarize a vector by a grouping vector
+
+```{r}
+jj_summarize_vector(summarize_obj = pbmc_small$nCount_RNA, summarize_by_vec = pbmc_small$groups, order = T)
+```
+
+**jj_summarize_dataframe**: summarize a data.frame by a grouping vector
+
+```{r}
+jj_summarize_dataframe(summarize_obj = pbmc_small@meta.data, summarize_by_vec = pbmc_small$groups)
+```
+
+**jj_summarize_sparse_mat**: summarize a matrix/sparseMatrix by a grouping vector
+
+```{r}
+ass_df = jj_get_feature_mat(feature_mat = GetAssayData(pbmc_small), features = c('CD79A', 'CD79B'))
+jj_summarize_sparse_mat(summarize_obj = ass_df, summarize_by_vec = pbmc_small$groups, method = 'mean')
+```
+
+```{r}
+jj_describe_df(pbmc_small[[]])
+```
+```{r}
+
+emb_df = Embeddings(pbmc_small, 'tsne')
+meta_df = pbmc_small[[]]
+res = jj_summarize_nearest_neighbour_data(dr_df = meta_df, reduction_df = emb_df, k = 5)
+pbmc_small$nCount_RNA_smoothed = res$nCount_RNA
+pbmc_small$groups_smoothed = res$groups
+jj_plot_features(pbmc_small, reduction = 'tsne', 
+                                    meta_features = c('nCount_RNA','nCount_RNA_smoothed', 'groups', 'groups_smoothed'), 
+                                    pt.size = 2)
+
+```
+
+
+# Helper functions
+
+**j**: Get an overview of an R object, print dimensions and the first few items, columns and rows
+```{r}
+j(pbmc_small)
+```
+
+```{r}
+j(GetAssayData(pbmc_small))
+```
+
+```{r}
+j(pbmc_small@meta.data, show_max = 5)
+```
+
+```{r}
+j(pbmc_small$groups, headtail = 5)
+```
+
+```{r}
+vec_list = list(group1= letters[1:5], group2= letters[2:4], group3 = letters[c(1,3,6)])
+jj_compare_vectors(A=vec_list$group1, B=vec_list$group2)
+jj_plot_upsetr(vec_list)
+jj_make_overlap_df(vec_list)
+
+```
+
+```{r}
+matrix1 = matrix(1:80, nrow = 8, dimnames = list(paste0('gene_',1:8), paste0('cell_', 1:10)))
+matrix2 = matrix(1:50, nrow = 5, dimnames = list(paste0('gene_',c(1,4,8,2,3)), paste0('cell_', c(2:5, 8:13))))
+jj_match_matrices(matrix1, matrix2, print_only = T)
+jj_match_matrices(matrix1, matrix2)
+```
+
+
+**jj_cap_vals**: Cap values at the top/bottom of a vector by a threshold
+
+```{r}
+jj_cap_vals(seq(0,100), cap_top='q95', cap_bottom=10)
+```
+
+**jj_initialize_df**: create a data.frame of defined size with an initial value and optional names
+
+```{r}
+jj_initialize_df(ncol = 5, nrow = 3, init = NA, col.names = letters[1:5], row.names = paste0('Row_',1:3))
+```
+
+**jj_prime_factorization**: get prime numbers making up a bigger number
+```{r}
+jj_prime_factorization(124)
+```
+**jj_list_to_df**: combine a list to a data.frame in long or wide format
+```{r}
+a_list = list(c1 = rnorm(8), c2 = letters[1:5], c3 = LETTERS[1:6])
+a_list
+jj_list_to_df(a_list, fill_with = NA, long = F)
+jj_list_to_df(a_list, long = T)
+```
+
+```{r}
+#regions_vec = c('chr1-234-3488', 'chrX-300-1500')
+#jj_save_bed(regions_vec, 'test.bed')
+#jj_load_bed('test.bed', return_granges = TRUE)
+```
+
+other helper functions
+
+- jj_load_excel()
+- jj_save_excel()

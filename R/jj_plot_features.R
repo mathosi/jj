@@ -88,6 +88,7 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
   if(is.null(features) & is.null(meta_features)){
     meta_features = 'data'
     dr_df$data = ''
+    goi = 'data'
   }
   
   cont_or_disc <- unlist(strsplit(cont_or_disc, split = ''))
@@ -559,4 +560,9 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
     }
   }
   return(plot)
+}
+
+#TODO replace repetitions of code with this helper function
+cget_scale_midpoint = function(feat){
+  (max(feat, na.rm = T) + min(feat, na.rm = T)) / 2 
 }

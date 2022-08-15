@@ -22,8 +22,8 @@
 #' @export
 jj_summarize_sparse_mat <- function(summarize_obj, summarize_by_vec, method='mean', return_matrix=TRUE){ 
   #also works for normal matrices
-  stopifnot(is.vector(summarize_by_vec))
-  stopifnot(!is.factor(summarize_by_vec))
+  stopifnot(is.vector(summarize_by_vec) | is.factor(summarize_by_vec))
+  #stopifnot(!is.factor(summarize_by_vec))
   if(!identical(ncol(summarize_obj), length(summarize_by_vec))){
     stop('Number of columns in the assay and length of group vector must be identical')
   }

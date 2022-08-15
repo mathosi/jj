@@ -1,26 +1,26 @@
 #' bind features together with meta.data
 #'
-#' add values from a matrix/seurat object to data.frame containing metadata (dr_df)
+#' add values from a matrix/seurat object to data.frame containing metadata (df)
 #'
 #' @param obj Seurat object or matrix of features*samples
 #' @param assay assay in Seurat object to use
 #' @param slot slot in assay to use
 #' @param features Features to extract from obj
-#' @param dr_df optional data.frame, which is joined together with the feature matrix
+#' @param df optional data.frame, which is joined together with the feature matrix
 #' @param cap_top value passed to jj_cap_vals
 #' @param cap_bottom value passed to jj_cap_vals
 #' @param log10Transform if TRUE, return log10 transformed feature values, default: F
 #' @keywords cap
 #' @export
 #' @examples
-#' jj_bind_features_with_dr_df(seurat_rna, assay='RNA', slot='data', features=c('CD4','CD8A'), cap_top='q95')
+#' jj_bind_features_with_df(seurat_rna, assay='RNA', slot='data', features=c('CD4','CD8A'), cap_top='q95')
 
 
 jj_bind_features_with_dr_df <- function(obj, assay='RNA', slot='counts', 
                                      features, dr_df=NULL, cap_top=NULL, 
                                      cap_bottom=NULL, log10Transform=FALSE,...){
   #
-  #if dr_df=NULL, just return the matrix from the seurat assay
+  #if dr_df=NULL, just return the matrix from the Seurat assay
   if(is.character(dr_df)){
     dr_df <- jj_get_reduction_coords(obj, dr_df)
   }

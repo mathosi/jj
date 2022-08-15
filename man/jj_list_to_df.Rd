@@ -4,7 +4,7 @@
 \alias{jj_list_to_df}
 \title{Convert list to data.frame in long/wide format}
 \usage{
-jj_list_to_df(flist, long = TRUE, fill_with = NA)
+jj_list_to_df(flist, long = TRUE, fill_with = NA, maintain_classes = TRUE)
 }
 \arguments{
 \item{flist}{Full path to the file to read or write}
@@ -12,6 +12,8 @@ jj_list_to_df(flist, long = TRUE, fill_with = NA)
 \item{long}{If TRUE (default), return two column data.frame with names in first and values in second column. Else, return data.frame with one column per list element.}
 
 \item{fill_with}{If long=FALSE, value to fill cells in case of unequal lenghts of list elements. Default=NA}
+
+\item{maintain_classes}{keep the class of each entry in the list, otherwise coerces to character columns}
 }
 \description{
 load excel workbook as list of data.frames or save list of data.frames as excel
