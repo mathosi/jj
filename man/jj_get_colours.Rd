@@ -16,19 +16,24 @@ jj_get_colours(
 
 \item{colour_csv}{two column csv with annotation in first column and colour in second column (alternatively a data.frame with columns \code{group} and \code{colour})}
 
-\item{plot_colours}{visualize colours as ggplot heatmap, default: F}
+\item{plot_colours}{visualize colours as ggplot heatmap, default = FALSE}
+
+\item{comment_char}{Lines in the colour file starting with this character are ignored, default = '/'}
 }
 \description{
 get colours as named vector from file
 }
 \examples{
-#Save this in file called `colour_map.csv`
-#/fruits
-#banana,yellow
-#apple,green
-#cherry,red
-#coconut,#D7B5D8
+#Save colour mapping in file (may contain comment lines starting with `/`)
+colour_df  = data.frame(group= c('g1','g2','g3'),colour= c('yellow', 'darkred','#D7B5D8'))
+write.table(colour_df, file = 'colour_map.csv',
+            sep = ',', row.names = F, col.names=F)
+# just show the colours in the file (also works passing the data.frame)
 jj_get_colours(colour_csv='colour_map.csv', plot_colours=TRUE)
-DimPlot(seurat_rna,  group.by = 'fruits') + scale_colour_manual(values=jj_get_colours(seurat_rna$clinical, colour_csv='colour_map.csv'))
+jj_get_colours(colour_csv=colour_df, plot_colours=TRUE)
+# use the colours in ggplot (automatically selects the groups which are needed)
+custom_cols = jj_get_colours(pbmc_small$groups, colour_csv='colour_map.csv')
+Seurat::DimPlot(pbmc_small,  group.by = 'groups') + scale_colour_manual(values=custom_cols)
+#or using jj_plot_features
+jj_plot_features(pbmc_small, reduction='tsne', meta_features='groups', custom_colors = custom_cols, pt.size = 3)
 }
-\keyword{colours}

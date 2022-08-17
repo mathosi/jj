@@ -21,10 +21,25 @@
 #' @param return_df if TRUE, instead of plotting, return the data.frame with the data
 #' @param x_lab label for the groups
 #' @param flip_coordinates flip coordinate system
-#' @keywords VlnPlot
 #' @export
 #' @examples
-#' 
+#' #plot as boxplot with additional mean, number of cells per group and cell sample (requires ggbeeswarm)
+#' jj_plot_numeric_by_group(pbmc_small@meta.data, feature_column = 'nFeature_RNA', group_column = 'groups',
+#'                          plot_mean = T, plot_cell_sample = T,
+#'                          plot_group_size = T, type = 'boxplot')
+#' #plot as violin with custom colours
+#' jj_plot_numeric_by_group(pbmc_small@meta.data, feature_column = 'nFeature_RNA', group_column = 'groups',
+#'                          custom_colors = c(g1='green', g2='blue'),
+#'                          plot_group_size = T, type = 'violin')
+#' #plot a sparse feature directly from Seurat
+#' jj_plot_sparse_by_group_seurat(pbmc_small, 'CD79A', 'groups', assay='RNA', slot='data')
+#' #or from a sparse matrix
+#' sp_mat = GetAssayData(pbmc_small)
+#' jj_plot_sparse_by_group(sp_mat, gene_plot = 'MS4A1', group_vec = pbmc_small$groups, order=T)
+#' #barplot of fractions by group, eg fractions of cluster annotations per group
+#' jj_plot_categorical_by_group(pbmc_small[[]], feature_column = 'RNA_snn_res.1', group_column =  'groups')
+#' #or using absolute counts
+#' jj_plot_categorical_by_group(pbmc_small[[]], feature_column = 'RNA_snn_res.1', group_column =  'groups', absolute_numbers = T)
 
 #' @rdname plot_feature_by_group
 #' @export
@@ -217,9 +232,7 @@ jj_plot_numeric_by_group = function(df, feature_column, group_column, custom_col
 jj_plot_categorical_by_group = function(df, feature_column, group_column, custom_colors=NULL,
                                      absolute_numbers=FALSE, return_df = FALSE, flip_coordinates=FALSE,
                                      theme_use = theme_minimal()){
-  #barplot of fractions by group, eg immune cell subtypes by tissue
-  #jj_plot_categorical_by_group(dr_df, 'singler_label', 'Tissue')
-  #jj_plot_categorical_by_group(seurat_rna@meta.data, 'Gender', 'clinical', absolute_numbers=T)
+
   summarise_fractions = function(df, summarise_by){
     summary_df = df %>% 
       dplyr::group_by(!!sym(summarise_by)) %>% 

@@ -25,18 +25,19 @@ jj_bind_features_with_dr_df(
 
 \item{features}{Features to extract from obj}
 
+\item{dr_df}{optional data.frame, which is joined together with the feature matrix}
+
 \item{cap_top}{value passed to jj_cap_vals}
 
 \item{cap_bottom}{value passed to jj_cap_vals}
 
 \item{log10Transform}{if TRUE, return log10 transformed feature values, default: F}
-
-\item{df}{optional data.frame, which is joined together with the feature matrix}
 }
 \description{
 add values from a matrix/seurat object to data.frame containing metadata (df)
 }
 \examples{
-jj_bind_features_with_df(seurat_rna, assay='RNA', slot='data', features=c('CD4','CD8A'), cap_top='q95')
+j(jj_bind_features_with_dr_df(pbmc_small, assay='RNA', slot='data', features = c('CD8A', 'CD79A'), cap_top = 'q95'))
+red_df = jj_get_reduction_coords(pbmc_small, 'tsne')
+head(jj_bind_features_with_dr_df(pbmc_small, features = c('CD8A', 'CD79A'), dr_df=red_df))
 }
-\keyword{cap}

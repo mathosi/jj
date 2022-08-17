@@ -2,28 +2,22 @@
 % Please edit documentation in R/utilities.R
 \name{from_to}
 \alias{from_to}
-\title{Convert a genomic coordinate string to a GRanges object}
+\title{remap values}
 \usage{
 from_to(annot_vec, old_new_map_vec)
 }
 \arguments{
-\item{regions}{Vector of genomic region strings}
+\item{old_new_map_vec}{named vector with names and values corresponding to old + new pairs of values}
 
-\item{sep}{Vector of separators to use for genomic string. First element is
-used to separate chromosome and coordinates, second separator is used to
-separate start and end coordinates.}
+\item{vec}{Vector of genomic region strings}
 
-\item{...}{Additional arguments passed to
-\code{\link[GenomicRanges]{makeGRangesFromDataFrame}}}
-}
-\value{
-Returns a GRanges object
+\item{...}{Additional arguments passed to}
 }
 \description{
-Convert a genomic coordinate string to a GRanges object
+pass a named vector to replace values in a second vector
 }
 \examples{
-regions <- c('chr1-1-10', 'chr2-12-3121')
-StringToGRanges(regions = regions)
+#map values from old to new
+from_to(annot_vec = c('T_cell', 'B_cells_2', 'B_cell_1'),  
+old_new_map_vec = c('B_cells_1' = 'B cell','B_cells_2' = 'B cell'))
 }
-\concept{utilities}

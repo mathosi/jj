@@ -8,7 +8,7 @@
 #' @keywords embeddings
 #' @export
 #' @examples
-#' jj_get_reduction_coords(seurat_rna, 'UMAP_1_10')
+#' head(jj_get_reduction_coords(pbmc_small, 'tsne'))
 
 jj_get_reduction_coords <- function(obj, redname=NULL, exact_match=TRUE){
   if(class(obj)=='Seurat'){

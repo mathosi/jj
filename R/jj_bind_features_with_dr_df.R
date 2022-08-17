@@ -6,14 +6,15 @@
 #' @param assay assay in Seurat object to use
 #' @param slot slot in assay to use
 #' @param features Features to extract from obj
-#' @param df optional data.frame, which is joined together with the feature matrix
+#' @param dr_df optional data.frame, which is joined together with the feature matrix
 #' @param cap_top value passed to jj_cap_vals
 #' @param cap_bottom value passed to jj_cap_vals
 #' @param log10Transform if TRUE, return log10 transformed feature values, default: F
-#' @keywords cap
 #' @export
 #' @examples
-#' jj_bind_features_with_df(seurat_rna, assay='RNA', slot='data', features=c('CD4','CD8A'), cap_top='q95')
+#' j(jj_bind_features_with_dr_df(pbmc_small, assay='RNA', slot='data', features = c('CD8A', 'CD79A'), cap_top = 'q95'))
+#' red_df = jj_get_reduction_coords(pbmc_small, 'tsne')
+#' head(jj_bind_features_with_dr_df(pbmc_small, features = c('CD8A', 'CD79A'), dr_df=red_df))
 
 
 jj_bind_features_with_dr_df <- function(obj, assay='RNA', slot='counts', 
@@ -45,6 +46,9 @@ jj_bind_features_with_dr_df <- function(obj, assay='RNA', slot='counts',
   if(is.null(dr_df)){
     return(goi_df)
   }
-  dr_df <- cbind(dr_df, goi_df)
+  dr_df = tibble::rownames_to_column(as.data.frame(dr_df), 'barcode_rownames') %>%
+    dplyr::left_join(tibble::rownames_to_column(as.data.frame(goi_df), 'barcode_rownames'), by = 'barcode_rownames') %>% 
+    as.data.frame %>% tibble::column_to_rownames('barcode_rownames')
+  #dr_df <- cbind(dr_df, goi_df)
   return(dr_df)
 }

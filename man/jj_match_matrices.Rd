@@ -15,7 +15,7 @@ jj_match_matrices(
 \arguments{
 \item{mat_a}{matrix 1}
 
-\item{mat_b}{matrix 2b}
+\item{mat_b}{matrix 2}
 
 \item{match_by}{match by \code{columns}, \code{rows} or \code{all}}
 

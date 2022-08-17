@@ -16,9 +16,10 @@ jj_list_to_df(flist, long = TRUE, fill_with = NA, maintain_classes = TRUE)
 \item{maintain_classes}{keep the class of each entry in the list, otherwise coerces to character columns}
 }
 \description{
-load excel workbook as list of data.frames or save list of data.frames as excel
+Convert list to data.frame in long/wide format
 }
 \examples{
-
+example_list = list(signature1=c('CD19A','CD79B','SDC1'), signature2=c('CD8A','CD8B1'))
+jj_list_to_df(flist=example_list)
+jj_list_to_df(flist=example_list, long = F)
 }
-\keyword{list,data.frame}

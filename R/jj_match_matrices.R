@@ -3,7 +3,7 @@
 #' return the subset of two matrices that shares the same rownames, colnames or both.
 #'
 #' @param mat_a matrix 1
-#' @param mat_b matrix 2b
+#' @param mat_b matrix 2
 #' @param match_by match by `columns`, `rows` or `all`
 #' @param print_only only print out whether rownames or colnames are identical between two matrices
 #' @param verbose rownames to set
@@ -29,7 +29,7 @@ jj_match_matrices = function(mat_a, mat_b, match_by = c('all', 'columns', 'rows'
     if(c_b) message(sprintf('colnames in a match colnames in b: %s, ...', paste(head(colnames(a), 2), collapse = ', ')))
     if(c_c) message(sprintf('rownames in a match colnames in b: %s, ...', paste(head(rownames(a), 2), collapse = ', ')))
     if(c_d) message(sprintf('colnames in a match rownames in b: %s, ...', paste(head(colnames(a), 2), collapse = ', ')))
-    if(!any(c(c_a, c_b, c_c, c_d))) message('a and b do not have matching names')
+    if(!any(c(c_a, c_b, c_c, c_d))) message('a and b do not have identical columnnames or rownames')
   }
   if(print_only){
     names_match(mat_a, mat_b)

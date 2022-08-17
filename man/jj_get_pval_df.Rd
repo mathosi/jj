@@ -52,7 +52,7 @@ data_df = data.frame(Sample = rep(1:10, each = 10),
 gg = jj_plot_numeric_by_group(data_df, feature_column = 'Disease_score', group_column = 'Group')
 gg
 #get mean score per sample
-sample_df = get_pval_df(data_df,
+sample_df = jj_get_pval_df(data_df,
                       sample_column = 'Sample',
                       donor_column =  'Donor',
                       group_column = 'Group',
@@ -77,7 +77,7 @@ pval_df = jj_get_pval_df(data_df,
 pval_df
 #add suitable y positions for p value visualization in the violin plot
 pval_df$ypos = c(7, 6.5, 6.75)
-#plot everything together
+#plot everything together using ggpubr package to show pvalues
 gg + geom_point(data = sample_df, mapping = aes(x = group, y = score, colour=donor), size=3) + 
   scale_colour_manual(values=jj_get_jj_colours(sample_df$donor)) +
   ggpubr::stat_pvalue_manual(data = pval_df, label='p_val_adj',

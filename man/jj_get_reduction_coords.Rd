@@ -17,6 +17,6 @@ jj_get_reduction_coords(obj, redname = NULL, exact_match = TRUE)
 Extract cell embeddings together with meta data from a Seurat, cisTopic or ArchR-object
 }
 \examples{
-jj_get_reduction_coords(seurat_rna, 'UMAP_1_10')
+head(jj_get_reduction_coords(pbmc_small, 'tsne'))
 }
 \keyword{embeddings}

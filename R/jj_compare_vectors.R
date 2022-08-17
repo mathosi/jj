@@ -32,16 +32,17 @@ jj_compare_vectors = function(A, B){
 }
 
 #' @export
-jj_plot_upsetr = function(list_of_vectors, mainbar.y.label =  'Intersection Size',  mb.ratio = c(0.55, 0.45)){
+jj_plot_upsetr = function(list_of_vectors, mainbar.y.label =  'Intersection Size',  mb.ratio = c(0.55, 0.45), 
+                          nsets=100, nintersects=40, ...){
   library(UpSetR)
   all_features = unique(unlist(list_of_vectors))
   features_in_all = lapply(list_of_vectors, function(x) as.integer(all_features %in% x))
   upsetr_tb = jj_list_to_df(features_in_all,long = F)
-  upsetr = UpSetR::upset(upsetr_tb, nsets=100,  mb.ratio = mb.ratio,
+  upsetr = UpSetR::upset(upsetr_tb, nsets=nsets, nintersects = nintersects,  mb.ratio = mb.ratio,
                          sets = rev(colnames(upsetr_tb)), keep.order = T, 
                          mainbar.y.label =  mainbar.y.label, 
                          order.by='freq', set_size.show = TRUE,   
-                         set_size.scale_max= nrow(upsetr_tb) +1.5 )
+                         set_size.scale_max= nrow(upsetr_tb) +1.5, ...)
   return(upsetr)
 }
 
