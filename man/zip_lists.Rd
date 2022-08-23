@@ -7,9 +7,11 @@
 zip_lists(list1, list2)
 }
 \arguments{
-\item{list1}{}
+\item{list1}{list 1}
 
-\item{list2}{}
+\item{list2}{list 2}
+
+\item{listoflists}{for zip_lists_multi: a list containing multiple lists}
 }
 \value{
 One list with alternating values from either list

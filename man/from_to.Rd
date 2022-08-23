@@ -4,12 +4,12 @@
 \alias{from_to}
 \title{remap values}
 \usage{
-from_to(annot_vec, old_new_map_vec)
+from_to(vec, old_new_map_vec)
 }
 \arguments{
-\item{old_new_map_vec}{named vector with names and values corresponding to old + new pairs of values}
-
 \item{vec}{Vector of genomic region strings}
+
+\item{old_new_map_vec}{named vector with names and values corresponding to old + new pairs of values}
 
 \item{...}{Additional arguments passed to}
 }
@@ -18,6 +18,6 @@ pass a named vector to replace values in a second vector
 }
 \examples{
 #map values from old to new
-from_to(annot_vec = c('T_cell', 'B_cells_2', 'B_cell_1'),  
+from_to(vec = c('T_cell', 'B_cells_2', 'B_cell_1'),  
 old_new_map_vec = c('B_cells_1' = 'B cell','B_cells_2' = 'B cell'))
 }

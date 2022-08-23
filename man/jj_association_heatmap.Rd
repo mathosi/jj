@@ -7,7 +7,7 @@
 \usage{
 jj_metadata_association_heatmap(
   score_mat,
-  metadat_mat,
+  metadata_df,
   plotAssocFor = NULL,
   cor_cutoff = 0.2,
   categorical_skip = 30,
@@ -15,7 +15,7 @@ jj_metadata_association_heatmap(
 )
 }
 \arguments{
-\item{metadat_mat}{data.frame/matrix with the metadata for each cell}
+\item{metadata_df}{data.frame/matrix with the metadata for each cell}
 
 \item{plotAssocFor}{Option to specify subset of metadata_mat for which associations should be calulated}
 
@@ -26,19 +26,28 @@ jj_metadata_association_heatmap(
 \item{scores_mat}{numeric matrix of scores (eg pc scores)}
 
 \item{group_vec}{vector of length = nrow(scores_mat) with group annotation}
+
+\item{group1}{cell names of group, for which jj_test_associations should test associations. Used to select the subset of metadata_df (which needs to contain rownames with the cell names}
+
+\item{group2}{group1 is compared against group2. If group2=NULL (default), all cells in the metadata_df not part of group1 are defined as group2}
 }
 \description{
 jj_metadata_association_heatmap: Plot heatmap to find metadata associations with a set of scores, e.g. from PCA
 jj_association_heatmap: Plot mean or scaled mean per group for all columns in scores_mat, good to further understand single metadata associations with scores.
 Further arguments can be passed to ComplexHeatmap
+jj_test_associations: Function to test association of metadata with a group of interest. Run logistic regressions with group1/group2 as outcome and a column in the metadata_df as predictor
+Repeat for all columns and sort by p-value and deviance against a null model (group ~ 1). This can reveal metadata variables enriched for the cluster of interest (group1)
 }
 \examples{
 #e.g. PC2 has positive correlation with the grouping from RNA_snn_res.1
 pca_scores = Embeddings(pbmc_small, 'pca')[,1:10]
-jj_metadata_association_heatmap(score_mat = pca_scores, metadat_mat = pbmc_small[[]],
+jj_metadata_association_heatmap(score_mat = pca_scores, metadata_df = pbmc_small[[]],
                                 cor_cutoff = 0.2)
 # Groups 1 and 2 tend to have high scores and group 0 has low scores for PC2
 jj_association_heatmap(scores_mat = pca_scores, group_vec = pbmc_small$RNA_snn_res.1)
 # confirm by plotting the data
 jj_plot_features(pbmc_small, reduction = 'pca', meta_features = 'RNA_snn_res.1', pt.size = 2)
+#test association of meta data with one selected group of cells
+group1 = colnames(pbmc_small)[pbmc_small$RNA_snn_res.1 == '0']
+jj_test_associations(metadata_df = pbmc_small@meta.data, group1 = group1)
 }

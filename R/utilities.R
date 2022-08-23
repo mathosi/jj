@@ -8,10 +8,10 @@
 #' @export
 #' @examples
 #' #map values from old to new
-#' from_to(annot_vec = c('T_cell', 'B_cells_2', 'B_cell_1'),  
+#' from_to(vec = c('T_cell', 'B_cells_2', 'B_cell_1'),  
 #' old_new_map_vec = c('B_cells_1' = 'B cell','B_cells_2' = 'B cell'))
 
-from_to = function(annot_vec, old_new_map_vec){
+from_to = function(vec, old_new_map_vec){
 
   new_annot = plyr::mapvalues(vec, 
                               from=names(old_new_map_vec),
@@ -30,9 +30,9 @@ min_max_normalize <- function(x)(x- min(x)) /(max(x)-min(x))
 #'
 #' zip two (or more) lists of equal length similar to pythons zip()
 #'
-#' @param list1 
-#' @param list2 
-#' @param listoflists
+#' @param list1 list 1
+#' @param list2 list 2
+#' @param listoflists for zip_lists_multi: a list containing multiple lists
 #' @returns One list with alternating values from either list
 #' @export
 #' @examples
