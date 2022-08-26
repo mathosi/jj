@@ -8,6 +8,9 @@
 #' @param thres optional value threshold, for which the number of observations are counted above and below
 #' @param title optional title
 #' @param xlab xlab text
+#' @param cols colours for bars above and below threshold
+#' @param plot_numbers NULL (do not plot numbers) or vector containing any combination of 1 (observations above threshold), 2 (observations below threshold) and 3 (observations below threshold that are not 0)
+#' @param pad padding for the numbers if plot_numbers is not NULL
 #' @export
 #' @examples
 #' cd8a_count = rnbinom(1e6, size = 1, prob = 0.7)
@@ -19,7 +22,7 @@
 #'   theme(legend.position = 'none')
 
 jj_plot_hist_wo0 = function(feature_vec, thres=NULL, title = '', xlab='value', 
-                            cols = c('red', 'lightblue'), plot_numbers=1:3){
+                            cols = c('red', 'lightblue'), plot_numbers=1:3, pad = 20){
   if(!all(feature_vec >=0)){
     stop('Histogram currently only implemented for counts >= 0.')
   }
@@ -35,9 +38,10 @@ jj_plot_hist_wo0 = function(feature_vec, thres=NULL, title = '', xlab='value',
     goi_smeq_thres_not_0 = sum(goi_df[, 'feature'] <= thres & goi_df[, 'feature'] != 0)
     
     strings_vec = vector()
-    strings_vec[1] = sprintf('%-20s%d', paste0('>  ', as.character(thres),': '), goi_gr_thres)
-    strings_vec[2] = sprintf('%-20s%d', paste0('<= ', as.character(thres),': ') , goi_smeq_thres)
-    strings_vec[3] = sprintf('%-20s%d', paste0('<= ', as.character(thres), ' & > 0: '), goi_smeq_thres_not_0)
+    sprintf_vec = paste0('%-', as.character(pad), 's%d')
+    strings_vec[1] = sprintf(sprintf_vec, paste0('>  ', as.character(thres),': '), goi_gr_thres)
+    strings_vec[2] = sprintf(sprintf_vec, paste0('<= ', as.character(thres),': ') , goi_smeq_thres)
+    strings_vec[3] = sprintf(sprintf_vec, paste0('<= ', as.character(thres), ' & > 0: '), goi_smeq_thres_not_0)
     string_plot = paste0(strings_vec[plot_numbers], collapse='\n')
     
     gg = ggplot(goi_df, aes_string(x='feature', fill= 'above_threshold')) +
