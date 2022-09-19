@@ -393,8 +393,10 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
 
 .LabelClusters = function(
   #function from Seurat to label clusters
-  #additional check is done: if id is not factor, stop. In original function this results in another
+  #additional:
+  #1 check is done: if id is not factor, stop. In original function this results in another
   #error message difficult to understand
+  #2 convert factor to character, otherwise custom labels results in error due to invalid factor levels
   plot,
   id,
   clusters = NULL,
@@ -521,6 +523,9 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
     stop("Length of labels (", length(x = labels),  ") must be equal to the number of clusters being labeled (", length(x = labels.loc), ").")
   }
   names(x = labels) <- groups
+  #convert factor to character, otherwise custom labels results in error due to invalid factor levels
+  labels.loc[, id] = as.character(labels.loc[, id])
+  
   for (group in groups) {
     labels.loc[labels.loc[, id] == group, id] <- labels[group]
   }

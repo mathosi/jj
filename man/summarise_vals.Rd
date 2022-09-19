@@ -10,7 +10,15 @@
 \alias{jj_volcano_plot}
 \title{summarise values as mean, mode, or sum by a group vector}
 \usage{
-jj_plot_hist_wo0(feature_vec, thres = NULL, title = "", xlab = "value")
+jj_plot_hist_wo0(
+  feature_vec,
+  thres = NULL,
+  title = "",
+  xlab = "value",
+  cols = c("red", "lightblue"),
+  plot_numbers = 1:3,
+  pad = 20
+)
 
 jj_summarize_sparse_mat(
   summarize_obj,
@@ -56,6 +64,12 @@ jj_volcano_plot(
 \item{title}{optional title}
 
 \item{xlab}{xlab text}
+
+\item{cols}{colours for bars above and below threshold}
+
+\item{plot_numbers}{NULL (do not plot numbers) or vector containing any combination of 1 (observations above threshold), 2 (observations below threshold) and 3 (observations below threshold that are not 0)}
+
+\item{pad}{padding for the numbers if plot_numbers is not NULL}
 
 \item{summarize_obj}{sparse matrix, vector, or data.frame}
 
@@ -110,7 +124,13 @@ jj_volcano_plot volcano plot of pval (which is -log10 transformed) against logFC
 jj_fc_fc_plot plot fold changes from two different DEG analyses against each other
 }
 \examples{
-jj_plot_hist_wo0(feature_vec = pmax(rnorm(1000), 0), title = 'myfeat', thres = 1)
+cd8a_count = rnbinom(1e6, size = 1, prob = 0.7)
+cell_nCount_RNA = rnbinom(1e6, size = 1000, prob=0.7)
+cd8a_norm_count = cd8a_count / cell_nCount_RNA
+jj_plot_hist_wo0(feature_vec = cd8a_norm_count, title = 'CD8A counts', thres = 0.015)
+jj_plot_hist_wo0(feature_vec = cd8a_norm_count, title = 'CD8A counts', thres = 0.015, 
+                plot_numbers = c(3,2), cols = c('grey', 'black')) +
+  theme(legend.position = 'none')
 df = data.frame(a=seq(1,5), b=c('a','b','b','b','a'), d=c(3,0,0,1,5))
 jj_summarize_vector(df$d, df$b, method='mean')
 jj_summarize_dataframe(df, df$b)
