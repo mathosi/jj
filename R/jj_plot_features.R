@@ -391,6 +391,7 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
   }
 }
 
+#' @export
 .LabelClusters = function(
   #function from Seurat to label clusters
   #additional:
