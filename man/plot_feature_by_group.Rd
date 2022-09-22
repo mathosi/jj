@@ -55,6 +55,7 @@ jj_plot_categorical_by_group(
   absolute_numbers = FALSE,
   return_df = FALSE,
   flip_coordinates = FALSE,
+  add_text = FALSE,
   theme_use = theme_minimal()
 )
 }

@@ -229,9 +229,15 @@ jj_plot_numeric_by_group = function(df, feature_column, group_column, custom_col
 
 #' @rdname plot_feature_by_group
 #' @export
-jj_plot_categorical_by_group = function(df, feature_column, group_column, custom_colors=NULL,
-                                     absolute_numbers=FALSE, return_df = FALSE, flip_coordinates=FALSE,
-                                     theme_use = theme_minimal()){
+jj_plot_categorical_by_group = function(df,
+                                        feature_column, 
+                                        group_column,
+                                        custom_colors=NULL,
+                                        absolute_numbers=FALSE, 
+                                        return_df = FALSE,
+                                        flip_coordinates=FALSE, 
+                                        add_text=FALSE,
+                                        theme_use = theme_minimal()){
 
   summarise_fractions = function(df, summarise_by){
     summary_df = df %>% 
@@ -261,9 +267,17 @@ jj_plot_categorical_by_group = function(df, feature_column, group_column, custom
   if(!absolute_numbers){
     gg = ggplot(summary_df, aes_string(x=group_column, y = 'fraction', fill = feature_column)) +
       geom_bar(stat='identity', position="fill")
+    if(add_text){
+      gg = gg + geom_text(aes(label = paste0(round(fraction*100,2),"%")), 
+                          position = position_stack(vjust = 0.5), size = 2)
+    }
   }else{
     gg = ggplot(summary_df, aes_string(x=group_column, y = 'ncells', fill = feature_column)) +
       geom_bar(stat='identity')
+    if(add_text){
+      gg = gg + geom_text(aes(label = ncells), 
+                          position = position_stack(vjust = 0.5), size = 2)
+    }
   }
   
   if(flip_coordinates){
