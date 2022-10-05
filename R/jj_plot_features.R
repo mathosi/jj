@@ -33,6 +33,8 @@
 #' @param background_cells when using facets, include the cells not part of the facet as grey background 
 #' @param label add boxes with labels to the discrete variable
 #' @param box_col colour to fill boxes, if label = T. If NULL, use colours from the respective groups
+#' @param xlabel x axis label, default: UMAP 1
+#' @param ylabel y axis label, default: UMAP 2
 #' @keywords plot
 #' @export
 #' @examples
@@ -58,7 +60,8 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
                              no_legend=F, n_facet_rows=NULL, facet_subset=NULL,
                              cont_or_disc = 'a', use_pointdensity = FALSE,
                              pointdensity_subset=NULL, order=FALSE, 
-                             background_cells=FALSE, label=FALSE, box_col=NULL, convert_factors=FALSE){
+                             background_cells=FALSE, label=FALSE, box_col=NULL, convert_factors=FALSE,
+                             xlabel = 'UMAP 1', ylabel = 'UMAP 2'){
   
   if(is.null(reduction)){
     stop('reduction must be either string specifying the reduction to use from seurat object or a dr_df data.frame')
@@ -339,6 +342,8 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
       print(mean_acc)
       gg <- gg + scale_color_gradient2(low = "grey80", mid = "blue", high = "red", midpoint = mean_acc)
     }
+    
+    gg = gg + xlab(xlabel) + ylab(ylabel)
     
     if(is.theme(custom_theme)){
       gg <- gg + custom_theme
