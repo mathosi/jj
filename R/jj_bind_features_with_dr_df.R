@@ -25,7 +25,7 @@ jj_bind_features_with_dr_df <- function(obj, assay='RNA', slot='counts',
   if(is.character(dr_df)){
     dr_df <- jj_get_reduction_coords(obj, dr_df)
   }
-  if(class(obj) == 'Seurat'){
+  if('Seurat' %in% class(obj)){
     obj = GetAssayData(obj, assay=assay, slot=slot)
   }
   goi_df <- t(as.matrix(jj_get_feature_mat(obj,
