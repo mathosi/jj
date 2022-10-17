@@ -30,7 +30,8 @@ jj_summarize_sparse_mat <- function(summarize_obj, summarize_by_vec, method='mea
   method = match.arg(method, choices=c('mean', 'sum'))
   summarize_obj <- Matrix::t(summarize_obj)
   #be careful: function 'mean' ignores . completely
-  summarize_obj <- Matrix.utils::aggregate.Matrix(summarize_obj, groupings = summarize_by_vec, fun = 'sum')
+  #summarize_obj <- Matrix.utils::aggregate.Matrix(summarize_obj, groupings = summarize_by_vec, fun = 'sum')
+  summarize_obj = Matrix::fac2sparse(summarize_by_vec) %*% summarize_obj
   groups_in_vec <- rownames(summarize_obj)
   #divide by n cells per group if mean should be returned
   if(method=='mean'){

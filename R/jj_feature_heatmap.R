@@ -11,11 +11,15 @@
 #' @export
 #' @examples
 #' jj_plot_heatmap(pbmc_small, features_use = c('CD8A','KLRG1','CD79A','CD79B','CD3E'), group_vec = pbmc_small$groups, scale_data=F)
+#' #pass named vector to features_use to show column annotation
+#' jj_plot_heatmap(GetAssayData(pbmc_small), features_use = c(T='CD8A',T='KLRG1',B='CD79A',B='CD79B',T='CD3E'), group_vec = pbmc_small$groups)
 #' jj_plot_dotplot(GetAssayData(pbmc_small), features_use = c('CD8A','KLRG1','CD79A','CD79B','CD3E'), group_vec = pbmc_small$groups)
+
+
 
 #' @rdname feature_heatmap
 #' @export
-jj_plot_heatmap = function(obj, features_use, group_vec, scale_data=TRUE, top_annot=NULL, row_annot = NULL,
+jj_plot_heatmap = function(obj, features_use, group_vec, scale_data=TRUE, show_top_annot=TRUE, row_annot = NULL,
                            return_matrix=FALSE, cluster_rows=T, cluster_columns=T){
   #create heatmap of scaled mean normalized expression for `features_use` per group in `group_vec`
   #scaling ensures that color scale is comparable between genes
@@ -39,6 +43,12 @@ jj_plot_heatmap = function(obj, features_use, group_vec, scale_data=TRUE, top_an
     #print(cols_use)
     row_annot = rowAnnotation(cluster = rownames(heatmap_mat), col=list(cluster=cols_use))
   }
+  
+  top_annot = NULL
+  if(!is.null(names(features_use)) & show_top_annot){
+    top_annot =  HeatmapAnnotation(Feature=names(features_use), col = list(Feature=jj_get_jj_colours(names(features_use))))
+  }
+  
   name_use = 'mean expression'
   if(scale_data){
     heatmap_mat = scale(heatmap_mat)
