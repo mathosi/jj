@@ -20,7 +20,7 @@
 #' @rdname feature_heatmap
 #' @export
 jj_plot_heatmap = function(obj, features_use, group_vec, scale_data=TRUE, show_top_annot=TRUE, row_annot = NULL,
-                           return_matrix=FALSE, cluster_rows=T, cluster_columns=T){
+                           return_matrix=FALSE, cluster_rows=T, cluster_columns=T, ...){
   #create heatmap of scaled mean normalized expression for `features_use` per group in `group_vec`
   #scaling ensures that color scale is comparable between genes
   library(ComplexHeatmap)
@@ -36,12 +36,18 @@ jj_plot_heatmap = function(obj, features_use, group_vec, scale_data=TRUE, show_t
   heatmap_mat = jj_summarize_sparse_mat(heatmap_mat,summarize_by_vec = group_vec,
                                         method = 'mean')
   heatmap_mat = t(heatmap_mat)
-  if(is.null(row_annot)){
-    library(jj)
-    cols_use = jj_get_jj_colours(gtools::mixedsort(rownames(heatmap_mat)))
-    cols_use = cols_use[names(cols_use) %in% rownames(heatmap_mat)]
-    #print(cols_use)
-    row_annot = rowAnnotation(cluster = rownames(heatmap_mat), col=list(cluster=cols_use))
+  if(!is.null(row_annot)){
+    if('logical' %in% class(row_annot)){
+      if(row_annot){
+        library(jj)
+        cols_use = jj_get_jj_colours(gtools::mixedsort(rownames(heatmap_mat)))
+        cols_use = cols_use[names(cols_use) %in% rownames(heatmap_mat)]
+        #print(cols_use)
+        row_annot = rowAnnotation(cluster = rownames(heatmap_mat), col=list(cluster=cols_use))
+      }else{
+        row_annot = NULL
+      }
+    }
   }
   
   top_annot = NULL
@@ -56,7 +62,7 @@ jj_plot_heatmap = function(obj, features_use, group_vec, scale_data=TRUE, show_t
   } 
   if(return_matrix) return(heatmap_mat)
   h1 = Heatmap(heatmap_mat, name = name_use, top_annotation = top_annot, right_annotation = row_annot,
-               cluster_rows = cluster_rows, cluster_columns = cluster_columns)
+               cluster_rows = cluster_rows, cluster_columns = cluster_columns, ...)
   return(h1)
 }
 
