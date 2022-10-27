@@ -21,6 +21,7 @@
 #' @param return_df if TRUE, instead of plotting, return the data.frame with the data
 #' @param x_lab label for the groups
 #' @param flip_coordinates flip coordinate system
+#' @param text_size size of numbers in plots
 #' @export
 #' @examples
 #' #plot as boxplot with additional mean, number of cells per group and cell sample (requires ggbeeswarm)
@@ -237,6 +238,7 @@ jj_plot_categorical_by_group = function(df,
                                         return_df = FALSE,
                                         flip_coordinates=FALSE, 
                                         add_text=FALSE,
+                                        text_size = 5,
                                         theme_use = theme_minimal()){
 
   summarise_fractions = function(df, summarise_by){
@@ -269,14 +271,14 @@ jj_plot_categorical_by_group = function(df,
       geom_bar(stat='identity', position="fill")
     if(add_text){
       gg = gg + geom_text(aes(label = paste0(round(fraction*100,2),"%")), 
-                          position = position_stack(vjust = 0.5), size = 2)
+                          position = position_stack(vjust = 0.5), size = text_size)
     }
   }else{
     gg = ggplot(summary_df, aes_string(x=group_column, y = 'ncells', fill = feature_column)) +
       geom_bar(stat='identity')
     if(add_text){
       gg = gg + geom_text(aes(label = ncells), 
-                          position = position_stack(vjust = 0.5), size = 2)
+                          position = position_stack(vjust = 0.5), size = text_size)
     }
   }
   
