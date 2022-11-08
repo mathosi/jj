@@ -21,6 +21,7 @@
 #' @param return_df if TRUE, instead of plotting, return the data.frame with the data
 #' @param x_lab label for the groups
 #' @param flip_coordinates flip coordinate system
+#' @param ... further arguments passed to the main geom of ggplot
 #' @export
 #' @examples
 #' #plot as boxplot with additional mean, number of cells per group and cell sample (requires ggbeeswarm)
@@ -59,7 +60,7 @@ jj_plot_sparse_by_group_seurat = function(seurat_obj, gene_plot, group_column, a
 #' @export
 jj_plot_sparse_by_group = function(rna_mat, gene_plot, group_vec, x_lab='Group', theme_use = theme_minimal(), 
                                 plot_cell_sample=FALSE, plot_zero_fraction=TRUE, plot_mean = TRUE, plot_group_size = FALSE,
-                                type='violin', custom_colors=NULL, order=FALSE, flip_coordinates=FALSE){
+                                type='violin', custom_colors=NULL, order=FALSE, flip_coordinates=FALSE, ...){
   #rna mat n genes (rows) * m samples (columns)
   #eg.
   #rnamat = GetAssayData(seurat_rna)
@@ -94,10 +95,10 @@ jj_plot_sparse_by_group = function(rna_mat, gene_plot, group_vec, x_lab='Group',
   #max_y = max(data_df[, genes_plot[i]])
   if(type=='violin'){
     gg = ggplot() +
-      geom_violin(data=data_df, mapping = aes_string(x = 'x', y = gene_plot, fill='x'))
+      geom_violin(data=data_df, mapping = aes_string(x = 'x', y = gene_plot, fill='x'), ...)
   }else if(type=='boxplot'){
     gg = ggplot() +
-      geom_boxplot(data=data_df, mapping = aes_string(x = 'x', y = gene_plot, fill='x'), outlier.shape = NA) 
+      geom_boxplot(data=data_df, mapping = aes_string(x = 'x', y = gene_plot, fill='x'), outlier.shape = NA, ...) 
   }
   
   if(plot_cell_sample){
@@ -164,7 +165,7 @@ jj_plot_sparse_by_group = function(rna_mat, gene_plot, group_vec, x_lab='Group',
 #' @export
 jj_plot_numeric_by_group = function(df, feature_column, group_column, custom_colors=NULL,
                                  plot_cell_sample=FALSE, plot_mean = TRUE, plot_group_size = FALSE,
-                                 theme_use = theme_minimal(), type='violin', order=FALSE, flip_coordinates=FALSE){
+                                 theme_use = theme_minimal(), type='violin', order=FALSE, flip_coordinates=FALSE, ...){
   #jj_plot_numeric_by_group(seurat_rna@meta.data, 'dissimilarity.score', 'patient', plot_group_size = T, flip_coordinates=T)
   type = match.arg(type, choices = c('violin', 'boxplot'))
   data_df = as.data.frame(df)[, c(group_column, feature_column)]
@@ -184,11 +185,11 @@ jj_plot_numeric_by_group = function(df, feature_column, group_column, custom_col
   
   if(type=='violin'){
     gg = ggplot() +
-      geom_violin(data=data_df, mapping = aes_string(x = group_column, y = feature_column, fill=group_column))
+      geom_violin(data=data_df, mapping = aes_string(x = group_column, y = feature_column, fill=group_column), ...)
   }else if(type=='boxplot'){
     gg = ggplot() +
       geom_boxplot(data=data_df, mapping = aes_string(x = group_column, y = feature_column, fill=group_column),
-                   outlier.shape = NA) 
+                   outlier.shape = NA, ...) 
   }
   
   if(plot_cell_sample){
@@ -266,14 +267,14 @@ jj_plot_categorical_by_group = function(df,
   
   if(!absolute_numbers){
     gg = ggplot(summary_df, aes_string(x=group_column, y = 'fraction', fill = feature_column)) +
-      geom_bar(stat='identity', position="fill")
+      geom_bar(stat='identity', position="fill", ...)
     if(add_text){
       gg = gg + geom_text(aes(label = paste0(round(fraction*100,2),"%")), 
                           position = position_stack(vjust = 0.5), size = 2)
     }
   }else{
     gg = ggplot(summary_df, aes_string(x=group_column, y = 'ncells', fill = feature_column)) +
-      geom_bar(stat='identity')
+      geom_bar(stat='identity', ...)
     if(add_text){
       gg = gg + geom_text(aes(label = ncells), 
                           position = position_stack(vjust = 0.5), size = 2)
@@ -347,3 +348,4 @@ jj_plot_categorical_by_group = function(df,
     dplyr::left_join(cell_ct_mat, by = 'cluster')
   return(cell_exp_ct_mat)
 }
+

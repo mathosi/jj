@@ -26,7 +26,7 @@ jj_plot_hist_wo0 = function(feature_vec, thres=NULL, title = '', xlab='value',
   if(!all(feature_vec >=0)){
     stop('Histogram currently only implemented for counts >= 0.')
   }
-  if(!is.null(plot_numbers)[1]){
+  if(!is.null(plot_numbers[1])){
     stopifnot(all(plot_numbers %in% 1:3))
   }
   names(cols) = c('FALSE','TRUE')
@@ -42,26 +42,27 @@ jj_plot_hist_wo0 = function(feature_vec, thres=NULL, title = '', xlab='value',
     strings_vec[1] = sprintf(sprintf_vec, paste0('>  ', as.character(thres),': '), goi_gr_thres)
     strings_vec[2] = sprintf(sprintf_vec, paste0('<= ', as.character(thres),': ') , goi_smeq_thres)
     strings_vec[3] = sprintf(sprintf_vec, paste0('<= ', as.character(thres), ' & > 0: '), goi_smeq_thres_not_0)
-    string_plot = paste0(strings_vec[plot_numbers], collapse='\n')
-    
+    if(is.null(plot_numbers[1])){
+      string_plot = '\n\n'
+    }else{
+      string_plot = paste0(paste0(strings_vec[plot_numbers], collapse='\n'), paste0(rep('\n', 3-length(plot_numbers)), collapse = ''), collapse = '')
+    }
     gg = ggplot(goi_df, aes_string(x='feature', fill= 'above_threshold')) +
       geom_histogram(bins = 300) + 
       scale_x_continuous(limits = c(0.01,NA)) + 
-      labs(title = title, 
+      labs(title = title, subtitle = string_plot, 
            x=xlab, y = 'n') +
       theme_minimal() + 
+      theme(text=element_text(family = 'mono'))  + 
       scale_fill_manual(values = cols)
-    if(!is.null(plot_numbers)){
-      gg = gg + 
-        labs(subtitle = string_plot) + 
-        theme(text=element_text(family = 'mono')) 
-    }
   }else{
     gg = ggplot(goi_df, aes_string(x='feature')) +
       geom_histogram(bins = 300) + 
       scale_x_continuous(limits = c(0.01,NA)) + 
-      labs(title = title, x=xlab, y = 'n') + 
-      theme_minimal()
+      labs(title = title, x=xlab, y = 'n', subtitle = '\n\n') + 
+      theme_minimal() + 
+      theme(text=element_text(family = 'mono'))
   }
   gg
 }
+
