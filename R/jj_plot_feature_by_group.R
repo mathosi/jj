@@ -240,7 +240,7 @@ jj_plot_categorical_by_group = function(df,
                                         flip_coordinates=FALSE, 
                                         add_text=FALSE,
                                         text_size = 5,
-                                        theme_use = theme_minimal()){
+                                        theme_use = theme_minimal(), ...){
 
   summarise_fractions = function(df, summarise_by){
     summary_df = df %>% 
