@@ -6,13 +6,19 @@
 #' @param features_use Features to plot from the Seurat active assay or the matrix
 #' @param group_vec vector with group annotation, has to have length equal to ncol(obj)
 #' @param scale_data scale feature-wise (i.e. the columns of the heatmap)
+#' @param show_top_annot if TRUE and features_use is a named vector, the names are used as top annotation
+#' @param row_annot either TRUE/FALSE to show colour bar by group from group_vec or a HeatmapAnnotation object
+#' @param transpose if TRUE, transpose the heatmap and show features as rows
 #' @param column_colors 
 #' @param group_annot_df
 #' @export
 #' @examples
 #' jj_plot_heatmap(pbmc_small, features_use = c('CD8A','KLRG1','CD79A','CD79B','CD3E'), group_vec = pbmc_small$groups, scale_data=F)
 #' #pass named vector to features_use to show column annotation
-#' jj_plot_heatmap(GetAssayData(pbmc_small), features_use = c(T='CD8A',T='KLRG1',B='CD79A',B='CD79B',T='CD3E'), group_vec = pbmc_small$groups)
+#' jj_plot_heatmap(GetAssayData(pbmc_small), features_use = c(T='CD8A',T='KLRG1',B='CD79A',B='CD79B',T='CD3E', myeloid = 'CD14'), group_vec = pbmc_small$groups, row_annot = T)
+#' #when transposing the heatmap, the row_annot is shown as top annotation
+#' jj_plot_heatmap(GetAssayData(pbmc_small), features_use = c('CD8A','KLRG1','CD79A','CD79B','CD3E'), group_vec = pbmc_small$groups, transpose = T, row_annot = T)
+#' jj_plot_heatmap(GetAssayData(pbmc_small), features_use = c('CD8A','KLRG1','CD79A','CD79B','CD3E'), group_vec = pbmc_small$groups, transpose = T, row_annot = HeatmapAnnotation(myannot = c('Group1', 'Group2'), col = list(myannot = c(Group1='green', Group2='cyan'))))
 #' jj_plot_dotplot(GetAssayData(pbmc_small), features_use = c('CD8A','KLRG1','CD79A','CD79B','CD3E'), group_vec = pbmc_small$groups)
 
 
@@ -20,7 +26,7 @@
 #' @rdname feature_heatmap
 #' @export
 jj_plot_heatmap = function(obj, features_use, group_vec, scale_data=TRUE, show_top_annot=TRUE, row_annot = NULL,
-                           return_matrix=FALSE, cluster_rows=T, cluster_columns=T, ...){
+                           return_matrix=FALSE, cluster_rows=T, cluster_columns=T, transpose = F, ...){
   #create heatmap of scaled mean normalized expression for `features_use` per group in `group_vec`
   #scaling ensures that color scale is comparable between genes
   library(ComplexHeatmap)
@@ -36,23 +42,51 @@ jj_plot_heatmap = function(obj, features_use, group_vec, scale_data=TRUE, show_t
   heatmap_mat = jj_summarize_sparse_mat(heatmap_mat,summarize_by_vec = group_vec,
                                         method = 'mean')
   heatmap_mat = t(heatmap_mat)
-  if(!is.null(row_annot)){
-    if('logical' %in% class(row_annot)){
-      if(row_annot){
-        library(jj)
-        cols_use = jj_get_jj_colours(gtools::mixedsort(rownames(heatmap_mat)))
-        cols_use = cols_use[names(cols_use) %in% rownames(heatmap_mat)]
-        #print(cols_use)
-        row_annot = rowAnnotation(cluster = rownames(heatmap_mat), col=list(cluster=cols_use))
-      }else{
-        row_annot = NULL
-      }
-    }
-  }
   
   top_annot = NULL
-  if(!is.null(names(features_use)) & show_top_annot){
-    top_annot =  HeatmapAnnotation(Feature=names(features_use), col = list(Feature=jj_get_jj_colours(names(features_use))))
+  if(transpose){
+    if(!is.null(row_annot)){
+      if('logical' %in% class(row_annot)){
+        if(row_annot){
+          library(jj)
+          cols_use = jj_get_jj_colours(gtools::mixedsort(rownames(heatmap_mat)))
+          cols_use = cols_use[names(cols_use) %in% rownames(heatmap_mat)]
+          #print(cols_use)
+          top_annot = HeatmapAnnotation(cluster = rownames(heatmap_mat), col=list(cluster=cols_use))
+        }
+      }else{
+        top_annot = row_annot
+      }
+    }
+  }else{
+    if(!is.null(row_annot)){
+      if('logical' %in% class(row_annot)){
+        if(row_annot){
+          library(jj)
+          cols_use = jj_get_jj_colours(gtools::mixedsort(rownames(heatmap_mat)))
+          cols_use = cols_use[names(cols_use) %in% rownames(heatmap_mat)]
+          #print(cols_use)
+          row_annot = rowAnnotation(cluster = rownames(heatmap_mat), col=list(cluster=cols_use))
+        }else{
+          row_annot = NULL
+        }
+      }
+    }
+    
+  }
+
+  if(transpose){
+    if(!is.null(names(features_use)) & show_top_annot){
+      row_annot =  rowAnnotation(Feature=names(features_use), col = list(Feature=jj_get_jj_colours(names(features_use))))
+    }else{
+      row_annot = NULL
+    }
+  }else{
+    if(!is.null(names(features_use)) & show_top_annot){
+      top_annot =  HeatmapAnnotation(Feature=names(features_use), col = list(Feature=jj_get_jj_colours(names(features_use))))
+    }else{
+      top_annot = NULL
+    }
   }
   
   name_use = 'mean expression'
@@ -61,6 +95,9 @@ jj_plot_heatmap = function(obj, features_use, group_vec, scale_data=TRUE, show_t
     name_use = 'scaled mean expression'
   } 
   if(return_matrix) return(heatmap_mat)
+  if(transpose){
+    heatmap_mat = t(heatmap_mat)
+  }
   h1 = Heatmap(heatmap_mat, name = name_use, top_annotation = top_annot, right_annotation = row_annot,
                cluster_rows = cluster_rows, cluster_columns = cluster_columns, ...)
   return(h1)
