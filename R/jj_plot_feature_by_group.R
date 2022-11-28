@@ -71,7 +71,7 @@ jj_plot_sparse_by_group = function(rna_mat, gene_plot, group_vec, x_lab='Group',
   type = match.arg(type, choices = c('violin', 'boxplot'))
   
   #get single cell expression data for the feature and add group information
-  data_df = as.data.frame(Matrix::t(jj_get_feature_mat(rna_mat, gene_plot, use_features_order = T)))
+  data_df = as.data.frame(as.matrix(Matrix::t(jj_get_feature_mat(rna_mat, gene_plot, use_features_order = T))))
   data_df$x = group_vec
   
   #mean expression per group
