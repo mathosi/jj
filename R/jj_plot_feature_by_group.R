@@ -316,6 +316,7 @@ jj_plot_categorical_by_group = function(df,
     rna_mat = scale(rna_mat)
   }
   expr_mat <- rna_mat %>%
+    as.matrix %>% 
     as.data.frame %>% 
     dplyr::mutate(cluster=group_vec) %>% 
     dplyr::group_by(cluster) %>% 
@@ -332,6 +333,7 @@ jj_plot_categorical_by_group = function(df,
   #rna_mat genes (rows) * cells (columns)
   rna_mat = rna_mat[rownames(rna_mat) %in% genes_plot,,drop=FALSE ]  %>% Matrix::t()
   cell_exp_ct_mat <- rna_mat %>%
+    as.matrix %>% 
     as.data.frame %>% 
     dplyr::mutate(cluster=group_vec) %>% 
     dplyr::group_by(cluster) %>%
