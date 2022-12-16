@@ -71,16 +71,22 @@
 #'              markers_highlight_col = structure(rep('orange',3), names=c('RGS1','GLNY','GRN')))
 
 jj_volcano_plot = function(plot_df, logfc_column, pval_column, symbol_column=NULL, 
-                           marker_thres = 0.5, labs_range = c(-1, 1), alpha = 1,                          
+                           marker_thres = c(0.5,Inf), labs_range = c(-1, 1), alpha = 1,                          
                            pt.size=2.5, highlight.pt.size = 2.5, 
                            col_vec = c("red", "blue", "black","green"),
                            markers_highlight = NULL, markers_highlight_col=NULL, only_highlight=FALSE, 
-                           col_by_highlight=FALSE, use_text=TRUE, add_thres_line = FALSE){
-   plot_df = as.data.frame(plot_df)
+                           col_by_highlight=FALSE, use_text=TRUE, add_thres_line = FALSE, add_numbers=FALSE){
+  plot_df = as.data.frame(plot_df)
   stopifnot(is.data.frame(plot_df))
   plot_df = plot_df[, colnames(plot_df) %in% c(logfc_column, pval_column, symbol_column)]
   symbols_use = c('outside plotting area', 'inside plotting area')
-  
+  if(is.null(marker_thres)){
+    marker_thres = c(Inf, Inf)
+  }else if(length(marker_thres)==1){
+    marker_thres = c(marker_thres, Inf)
+  }else if(length(marker_thres) > 2){
+    stop('marker_thres should specifiy thresholds on log2FC and adjusted p value (length 2)')
+  }
   
   if(!is.null(labs_range)){
     #add a column that is used for different symbols (circle if inside plot, triangle if outside)
@@ -100,17 +106,25 @@ jj_volcano_plot = function(plot_df, logfc_column, pval_column, symbol_column=NUL
   }
   
   #give label for all genes > marker_thres
-  mthres = as.character(marker_thres)
+  mthres = as.character(marker_thres[1])
   small_val = paste0(">= ", mthres)
   middle_val = sprintf(">-%s & <%s", mthres, mthres)
   big_val = paste0("<= -", mthres)
   
-  plot_df$logFC = ifelse(plot_df[, logfc_column] >= marker_thres, small_val, 
-                         ifelse(plot_df[, logfc_column]<=-marker_thres , big_val,
+  plot_df$logFC = ifelse(plot_df[, logfc_column] >= marker_thres[1], small_val, 
+                         ifelse(plot_df[, logfc_column]<=-marker_thres[1] , big_val,
                                 middle_val))
+  
+  plot_df[, pval_column] = -log10(plot_df[, pval_column])
+  mthres2 = as.character(marker_thres[2])
+  small_val2 = paste0(">= ", mthres2)
+  big_val2 = paste0("<= -", mthres2)
+  plot_df$pval_thres = ifelse(plot_df[, pval_column] >= marker_thres[2], small_val2, big_val2)
+  
   if(!is.null(symbol_column)){
     plot_df$label_use <- ''
     plot_df$label_use[plot_df$logFC != middle_val] <- plot_df[, symbol_column][plot_df$logFC != middle_val]
+    plot_df$label_use[plot_df$pval_thres != big_val2] <- plot_df[, symbol_column][plot_df$pval_thres != big_val2]
     
     if(!is.null(markers_highlight) & any(plot_df[, symbol_column] %in% markers_highlight)){
       if(only_highlight){
@@ -126,7 +140,6 @@ jj_volcano_plot = function(plot_df, logfc_column, pval_column, symbol_column=NUL
   cols_use = structure(col_vec, names = c(big_val, small_val, middle_val, "highlight"))
   cols_use = cols_use[names(cols_use) %in% plot_df$logFC]
   
-  plot_df[, pval_column] = -log10(plot_df[, pval_column])
   
   if(col_by_highlight){
     if(is.null(markers_highlight_col)){
@@ -190,9 +203,25 @@ jj_volcano_plot = function(plot_df, logfc_column, pval_column, symbol_column=NUL
   }
   
   if(add_thres_line){
-    g1 = g1 + 
-      geom_vline(xintercept = -marker_thres, linetype="dashed", color ='black', size = 0.5) +
-      geom_vline(xintercept = marker_thres, linetype="dashed", color ='black', size = 0.5)
+    if(!is.infinite(marker_thres[1])){
+      g1 = g1 + 
+        geom_vline(xintercept = -marker_thres[1], linetype="dashed", color ='black', size = 0.5) +
+        geom_vline(xintercept = marker_thres[1], linetype="dashed", color ='black', size = 0.5)
+    }
+    if(! is.infinite(marker_thres[2])){
+      g1 = g1 + 
+        geom_hline(yintercept = marker_thres[2], linetype="dashed", color ='black', size = 0.5)
+    }
+  }
+  
+  if(add_numbers){
+    #TSS vs nr fragments
+    label_df = data.frame(name = c('logfc_gr0', 'logfc_sm0'), 
+               n = c(sum(plot_df[, logfc_column] > 0), sum(plot_df[, logfc_column] < 0)),
+               x_pos = labs_range[c(2,1)],
+               y_pos = c(1,1))
+      g1 = g1 + geom_label(data = label_df[1, ],hjust = 1, vjust=0, mapping = aes(x = x_pos, y =  y_pos, label = n)) +
+   geom_label(data = label_df[2, ],hjust = 0, vjust=0, mapping = aes(x = x_pos, y =  y_pos, label = n))
   }
   
   g1 = g1 + labs(y = paste(pval_column, '(-log10)'))
