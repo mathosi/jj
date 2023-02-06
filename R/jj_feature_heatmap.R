@@ -31,7 +31,7 @@ jj_plot_heatmap = function(obj, features_use, group_vec, scale_data=TRUE, show_t
   #scaling ensures that color scale is comparable between genes
   library(ComplexHeatmap)
   if('Seurat' %in% class(obj)){
-    heatmap_mat = t(jj_bind_features_with_dr_df(obj, slot='data', features=features_use))
+    heatmap_mat = Matrix::t(jj_bind_features_with_dr_df(obj, slot='data', features=features_use))
   }else{
     message('Class of obj is not seurat, assuming it is a matrix of normalized counts (features in rows, cells in columns)')
     heatmap_mat = obj[rownames(obj) %in% features_use, ]
@@ -41,7 +41,7 @@ jj_plot_heatmap = function(obj, features_use, group_vec, scale_data=TRUE, show_t
   
   heatmap_mat = jj_summarize_sparse_mat(heatmap_mat,summarize_by_vec = group_vec,
                                         method = 'mean')
-  heatmap_mat = t(heatmap_mat)
+  heatmap_mat = base::t(heatmap_mat)
   
   top_annot = NULL
   if(transpose){
@@ -96,7 +96,7 @@ jj_plot_heatmap = function(obj, features_use, group_vec, scale_data=TRUE, show_t
   } 
   if(return_matrix) return(heatmap_mat)
   if(transpose){
-    heatmap_mat = t(heatmap_mat)
+    heatmap_mat = base::t(heatmap_mat)
   }
   h1 = Heatmap(heatmap_mat, name = name_use, top_annotation = top_annot, right_annotation = row_annot,
                cluster_rows = cluster_rows, cluster_columns = cluster_columns, ...)
@@ -269,7 +269,7 @@ jj_plot_dotplot = function(obj, features_use, group_vec, group_annot_df = NULL, 
 
 get_fraction_expressing = function(rna_mat, features_use, group_vec){
   #rna_mat genes (rows) * cells (columns)
-  rna_mat = rna_mat[rownames(rna_mat) %in% features_use,,drop=FALSE ]  %>% Matrix::t()
+  rna_mat = rna_mat[rownames(rna_mat) %in% features_use,,drop=FALSE ]  %>% base::t()
   cell_exp_ct_mat <- rna_mat %>%
     as.data.frame %>% 
     dplyr::mutate(cluster=group_vec) %>% 
@@ -277,7 +277,7 @@ get_fraction_expressing = function(rna_mat, features_use, group_vec){
     dplyr::summarise_all(list(function(x) sum(x>0))) %>% 
     as.data.frame %>%
     column_to_rownames('cluster') %>%
-    t %>% 
+    base::t %>% 
     as.data.frame %>%
     rownames_to_column('Gene') %>% 
     tidyr::pivot_longer(!Gene, names_to = 'cluster', values_to = 'cell_exp_ct')
@@ -292,7 +292,7 @@ get_fraction_expressing = function(rna_mat, features_use, group_vec){
 
 get_mean_expressing =  function(rna_mat, features_use, group_vec, scale_data=FALSE){
   #rna_mat genes (rows) * cells (columns)
-  rna_mat = rna_mat[rownames(rna_mat) %in% features_use,,drop=FALSE ]  %>% Matrix::t()
+  rna_mat = rna_mat[rownames(rna_mat) %in% features_use,,drop=FALSE ]  %>% base::t()
   
   if(scale_data){
     rna_mat = scale(rna_mat)
@@ -303,7 +303,7 @@ get_mean_expressing =  function(rna_mat, features_use, group_vec, scale_data=FAL
     dplyr::group_by(cluster) %>% 
     dplyr::summarise_all(list(mean)) %>% 
     as.data.frame %>% column_to_rownames('cluster') %>%
-    t %>% 
+    base::t %>% 
     as.data.frame %>%
     rownames_to_column('Gene') %>% 
     tidyr::pivot_longer(!Gene, names_to = 'cluster', values_to = 'count') 
@@ -325,19 +325,19 @@ get_mean_pct_per_group = function(rna_mat, features_use, group_vec, return_summa
   stopifnot(identical(ncol(rna_mat), length(group_vec)))
   stopifnot(all(features_use %in% rownames(rna_mat)))
   
-  rna_mat = rna_mat[rownames(rna_mat) %in% features_use, ]  %>% Matrix::t()
+  rna_mat = rna_mat[rownames(rna_mat) %in% features_use, ]  %>% base::t()
   
   expr_mat <- rna_mat %>%
     as.data.frame %>% dplyr::mutate(cluster=group_vec) %>% 
     dplyr::group_by(cluster) %>% dplyr::summarise_all(list(mean)) %>% 
-    as.data.frame %>% column_to_rownames('cluster') %>% t %>%  as.data.frame %>%
+    as.data.frame %>% column_to_rownames('cluster') %>% base::t %>%  as.data.frame %>%
     rownames_to_column('Gene') %>% 
     tidyr::pivot_longer(!Gene, names_to = 'cluster', values_to = 'count')
   
   scaled_expr_mat<- scale(rna_mat) %>%
     as.data.frame %>% dplyr::mutate(cluster=group_vec) %>% 
     dplyr::group_by(cluster) %>% dplyr::summarise_all(list(mean)) %>% 
-    as.data.frame %>% column_to_rownames('cluster') %>% t %>%  as.data.frame %>%
+    as.data.frame %>% column_to_rownames('cluster') %>% base::t %>%  as.data.frame %>%
     rownames_to_column('Gene') %>% 
     tidyr::pivot_longer(!Gene, names_to = 'cluster', values_to = 'scaled_count')
   expr_mat = expr_mat %>% dplyr::left_join(scaled_expr_mat, by = c('Gene', 'cluster'))
@@ -345,7 +345,7 @@ get_mean_pct_per_group = function(rna_mat, features_use, group_vec, return_summa
   cell_exp_ct_mat <- rna_mat %>%
     as.data.frame %>% dplyr::mutate(cluster=group_vec) %>% 
     dplyr::group_by(cluster) %>% dplyr::summarise_all(list(function(x) sum(x>0))) %>% 
-    as.data.frame %>% column_to_rownames('cluster') %>% t %>%  as.data.frame %>%
+    as.data.frame %>% column_to_rownames('cluster') %>% base::t %>%  as.data.frame %>%
     rownames_to_column('Gene') %>% 
     tidyr::pivot_longer(!Gene, names_to = 'cluster', values_to = 'cell_exp_ct')
   
