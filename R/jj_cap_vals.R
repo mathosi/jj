@@ -21,15 +21,15 @@ jj_cap_vals <- function(vec, cap_top='q99', cap_bottom=NULL){
       cap_top <- as.numeric(gsub('top', '', cap_top))
       cap_top <- sort(vec, decreasing = TRUE)[cap_top]
     }else if(grepl('q', cap_top)){
-      cap_top <- quantile(vec, as.numeric(gsub('q([0-9]{1,2})([0-9]*)', '\\1.\\2', cap_top))/100)
+      cap_top <- quantile(vec, as.numeric(gsub('q([0-9]{1,2})([0-9]*)', '\\1.\\2', cap_top))/100, na.rm=TRUE)
     }else if(cap_top=='auto'){
       q_use = 0.95
-      cap_top <- quantile(vec, q_use)
+      cap_top <- quantile(vec, q_use, , na.rm=TRUE)
       vec2 = vec
       vec2[vec2 > cap_top] <- cap_top
       if(n_distinct(vec2) < 5){
         q_use = 0.99
-        cap_top <- quantile(vec, q_use)
+        cap_top <- quantile(vec, q_use, na.rm=TRUE)
         vec2 = vec
         vec2[vec2 > cap_top] <- cap_top
         if(n_distinct(vec2) < 5) cap_top = NULL; q_use='not capped'
@@ -44,7 +44,7 @@ jj_cap_vals <- function(vec, cap_top='q99', cap_bottom=NULL){
       cap_bottom <- as.numeric(gsub('top', '', cap_bottom))
       cap_bottom <- sort(vec, decreasing = FALSE)[cap_bottom]
     }else{
-      cap_bottom <- quantile(vec, as.numeric(gsub('q', '', cap_bottom))/100)
+      cap_bottom <- quantile(vec, as.numeric(gsub('q', '', cap_bottom))/100, na.rm=TRUE)
     }
   }
   
