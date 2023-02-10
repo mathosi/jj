@@ -22,6 +22,7 @@
 #' @param x_lab label for the groups
 #' @param flip_coordinates flip coordinate system
 #' @param text_size size of numbers in plots
+#' @param cap_top cap the values at a quantile or fixed value
 #' @param ... further arguments passed to the main geom of ggplot
 #' @export
 #' @examples
@@ -61,7 +62,7 @@ jj_plot_sparse_by_group_seurat = function(seurat_obj, gene_plot, group_column, a
 #' @export
 jj_plot_sparse_by_group = function(rna_mat, gene_plot, group_vec, x_lab='Group', theme_use = theme_minimal(), 
                                 plot_cell_sample=FALSE, plot_zero_fraction=TRUE, plot_mean = TRUE, plot_group_size = FALSE,
-                                type='violin', custom_colors=NULL, order=FALSE, flip_coordinates=FALSE, ...){
+                                type='violin', custom_colors=NULL, order=FALSE, flip_coordinates=FALSE, cap_top=NULL, ...){
   #rna mat n genes (rows) * m samples (columns)
   #eg.
   #rnamat = GetAssayData(seurat_rna)
@@ -89,6 +90,10 @@ jj_plot_sparse_by_group = function(rna_mat, gene_plot, group_vec, x_lab='Group',
     data_df$x = factor(data_df$x, levels = mean_df$x[order_use])
     cell_exp_ct_mat = cell_exp_ct_mat[order_use, ]
     mean_df = mean_df[order_use, ]
+  }
+  
+  if(!is.null(cap_top)){
+    data_df[, gene_plot] = jj_cap_vals(data_df[, gene_plot], cap_top = cap_top)
   }
   
   cell_exp_ct_mat$row_nr = 1:nrow(cell_exp_ct_mat)
