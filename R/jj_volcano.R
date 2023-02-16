@@ -70,14 +70,19 @@
 #'             markers_highlight = c('RGS1','GLNY','GRN'), col_by_highlight = T,highlight.pt.size = 3,
 #'              markers_highlight_col = structure(rep('orange',3), names=c('RGS1','GLNY','GRN')))
 
+#' @export 
 jj_volcano_plot = function(plot_df, logfc_column, pval_column, symbol_column=NULL, 
                            marker_thres = c(0.5,Inf), labs_range = c(-1, 1), alpha = 1,                          
                            pt.size=2.5, highlight.pt.size = 2.5, 
                            col_vec = c("red", "blue", "black","green"),
                            markers_highlight = NULL, markers_highlight_col=NULL, only_highlight=FALSE, 
-                           col_by_highlight=FALSE, use_text=TRUE, add_thres_line = FALSE, add_numbers=FALSE){
+                           col_by_highlight=FALSE, use_text=TRUE, add_thres_line = FALSE, group_names=NULL,
+                           arrow_pos=list(x=0.25, xend=1, y=40)){
   plot_df = as.data.frame(plot_df)
   stopifnot(is.data.frame(plot_df))
+  if(!is.null(group_names)){
+    stopifnot(length(group_names) == 2)
+  }
   plot_df = plot_df[, colnames(plot_df) %in% c(logfc_column, pval_column, symbol_column)]
   symbols_use = c('outside plotting area', 'inside plotting area')
   if(is.null(marker_thres)){
@@ -214,14 +219,19 @@ jj_volcano_plot = function(plot_df, logfc_column, pval_column, symbol_column=NUL
     }
   }
   
-  if(add_numbers){
-    #TSS vs nr fragments
-    label_df = data.frame(name = c('logfc_gr0', 'logfc_sm0'), 
-               n = c(sum(plot_df[, logfc_column] > 0), sum(plot_df[, logfc_column] < 0)),
-               x_pos = labs_range[c(2,1)],
-               y_pos = c(1,1))
-      g1 = g1 + geom_label(data = label_df[1, ],hjust = 1, vjust=0, mapping = aes(x = x_pos, y =  y_pos, label = n)) +
-   geom_label(data = label_df[2, ],hjust = 0, vjust=0, mapping = aes(x = x_pos, y =  y_pos, label = n))
+  label_df = data.frame(name = c('logfc_gr0', 'logfc_sm0'),
+                        n = c(sum(plot_df[, logfc_column] > 0), sum(plot_df[, logfc_column] < 0)),
+                        x_pos = labs_range[c(2,1)],
+                        y_pos = c(1,1))
+  # if(add_numbers){
+  #   g1 = g1 + geom_text(data = label_df[1, ],hjust = 1, vjust=0, mapping = aes(x = x_pos, y =  y_pos, label = n)) +
+  #     geom_text(data = label_df[2, ],hjust = 0, vjust=0, mapping = aes(x = x_pos, y =  y_pos, label = n))
+  # }
+  if(!is.null(group_names[1])){
+    g1 = g1 + annotate('segment', x = arrow_pos$x, xend = arrow_pos$xend, y = arrow_pos$y, yend = arrow_pos$y,  arrow = arrow(type = "closed", length = unit(0.02, "npc"))) +
+      annotate('segment', x = -arrow_pos$x, xend = -arrow_pos$xend, y = arrow_pos$y, yend = arrow_pos$y,  arrow = arrow(type = "closed", length = unit(0.02, "npc"))) +
+      annotate('text', x = arrow_pos$xend+0.1, y = arrow_pos$y, label = sprintf('%s (%i genes)', group_names[1], label_df$n[1]), hjust = 0, size=3) + 
+      annotate('text', x = -arrow_pos$xend-0.1, y = arrow_pos$y, label = sprintf('%s (%i genes)', group_names[2], label_df$n[2]), hjust = 1, size = 3)
   }
   
   g1 = g1 + labs(y = paste(pval_column, '(-log10)'))

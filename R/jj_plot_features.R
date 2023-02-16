@@ -30,6 +30,7 @@
 #' @param pointdensity_subset Only used if use_pointdensity=T. If NULL, use all cells. If set to groups within meta_features, only calculate density for these subgroups
 #' @param facet_subset Only used when facet_by not FALSE. Only plot the facets for the groups supplied here. Background cells are still shown for the whole dataset 
 #' @param order order points so that largest values are on top
+#' @param shuffle randomly shuffle the plotting order
 #' @param background_cells when using facets, include the cells not part of the facet as grey background 
 #' @param label add boxes with labels to the discrete variable
 #' @param box_col colour to fill boxes, if label = T. If NULL, use colours from the respective groups
@@ -59,7 +60,7 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
                              pt.size=0.5, return_gg_object=FALSE, my_title=NULL, 
                              no_legend=F, n_facet_rows=NULL, facet_subset=NULL,
                              cont_or_disc = 'a', use_pointdensity = FALSE,
-                             pointdensity_subset=NULL, order=FALSE, 
+                             pointdensity_subset=NULL, order=FALSE, shuffle=FALSE, 
                              background_cells=FALSE, label=FALSE, box_col=NULL, convert_factors=FALSE,
                              xlabel = 'UMAP 1', ylabel = 'UMAP 2'){
   
@@ -211,6 +212,10 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
     
     if(order){
       dr_df = dr_df[order(dr_df[, goi[i]]), ]
+    }
+    if(shuffle){
+      if(order) warning('Both `order` and `shuffle` are TRUE. Returning shuffled result.')
+      dr_df = dr_df[sample(1:nrow(dr_df)), ]
     }
     
 
