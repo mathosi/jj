@@ -22,18 +22,18 @@
 #' @param pt.size size of points, default: 0.1
 #' @param return_gg_object return ggplot object instead of plotting, default: FALSE
 #' @param my_title optional title for the ggplot
-#' @param no_legend omit legend, default: FALSE
+#' @param use_no_legend omit legend, default: FALSE
 #' @param facet_by string specifying a meta_feature to facet by
 #' @param n_facet_rows number of rows for facetted plots
 #' @param cont_or_disc string of length 1 or length n features indicating whether the features are continuous 'c' or discrete 'd'. Try to set this manually, when the function fails. Otherwise, set to 'a' to automatically determine c or d for each feature.
 #' @param use_pointdensity colour by pointdensity using the ggpointdensity package. 
-#' @param pointdensity_subset Only used if use_pointdensity=T. If NULL, use all cells. If set to groups within meta_features, only calculate density for these subgroups
-#' @param facet_subset Only used when facet_by not FALSE. Only plot the facets for the groups supplied here. Background cells are still shown for the whole dataset 
-#' @param order order points so that largest values are on top
-#' @param shuffle randomly shuffle the plotting order
-#' @param background_cells when using facets, include the cells not part of the facet as grey background 
-#' @param label add boxes with labels to the discrete variable
-#' @param box_col colour to fill boxes, if label = T. If NULL, use colours from the respective groups
+#' @param show_background_cells bool, works if foreground_subset_bool is specified. Also when using facets, include the cells not part of the facet as grey background 
+#' @param foreground_subset_bool boolean vector with same length as number of cells. If show_background_cells=TRUE, show all cells with FALSE as grey background. Do also exlcude those cells for pointdensity calculation, if use_pointdensity=TRUE
+#' @param facet_subset Only used when facet_by not NULL Only plot the facets for the groups supplied here. Background cells are still shown for the whole dataset 
+#' @param do_order bool, order points so that largest values are on top
+#' @param do_shuffle bool, randomly shuffle the plotting order. Supersedes do_order.
+#' @param do_label add boxes with labels to the discrete variable
+#' @param box_col colour to fill boxes, if do_label = T. If NULL, use colours from the respective groups
 #' @param xlabel x axis label, default: UMAP 1
 #' @param ylabel y axis label, default: UMAP 2
 #' @keywords plot
@@ -43,13 +43,13 @@
 #' jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, shape=15, my_title='fruits')
 #' jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, facet_by='fruit', n_facet_rows=2)
 #' jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, facet_by='dish')
-#' jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, custom_colors=c(Apple='green', Banana='yellow'), label=T)
-#' jj_plot_features(seurat_rna, features=c('CD4', 'CD8A'), cap_top='q95', colorScale='viridis')
+#' jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, custom_colors=c(Apple='green', Banana='yellow'), do_label=T)
+#' jj_plot_features(pbmc_small, reduction='tsne', features=c('MS4A1', 'CD79A'), cap_top='q95', colorScale='viridis', pt.size = 2, xlabel='tsne_1', ylabel='tsne_2',my_title=c('tnse: MS4A1','tsne: CD79A'))
 #' df2 = data.frame(a=rnorm(100, 0, 5), b=rnorm(100, 0, 5), d=rbinom(100, 50, 0.3), e = sample(c('A','B', 'C'), 100, replace=T))
-#' jj_plot_features(reduction=df2, meta_features=c('d'), pt.size=4, facet_by = 'e', background_cells = T, order=T, custom_theme = theme_bw())
-#' jj_plot_features(reduction=df2, meta_features='e', pt.size=4, facet_by = 'e', use_pointdensity = T, order=T, custom_theme = theme_bw())
-#' jj_plot_features(reduction=df2, meta_features='e', pt.size=4, use_pointdensity = T, pointdensity_subset = c('B','C'), order=T, custom_theme = theme_bw())
-#' jj_plot_features(reduction=df2, meta_features='e', pt.size=4, use_pointdensity = T, pointdensity_subset = c('B','C'), background_cells=T, order=T, custom_theme = theme_bw())
+#' jj_plot_features(reduction=df2, meta_features=c('d'), pt.size=4, facet_by = 'e', show_background_cells = T, do_order=T, custom_theme = theme_bw())
+#' jj_plot_features(reduction=df2, meta_features='e', pt.size=4, facet_by = 'e', use_pointdensity = T, do_order=T, custom_theme = theme_bw())
+#' jj_plot_features(reduction=df2, meta_features='e', pt.size=4, use_pointdensity = T, foreground_subset_bool = df2$e %in% c('B','C'),show_background_cells=T, do_order=T, custom_theme = theme_bw())
+#' jj_plot_features(reduction=df2, meta_features='e', pt.size=4, use_pointdensity = T, foreground_subset_bool = df2$e %in% c('B','C'), show_background_cells=T, facet_by = 'e', facet_subset = c('A','B'), custom_theme = theme_bw())
 #'
 
 jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, meta_features=NULL,
@@ -57,13 +57,14 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
                              colorScale=c('viridis', 'wbr', 'gbr', 'bry', 'seurat'),
                              facet_by=NULL, cap_top=NULL,  cap_bottom=NULL, 
                              custom_colors=NULL, custom_theme=theme_minimal(), shape = 16, alpha=1,
-                             pt.size=0.5, return_gg_object=FALSE, my_title=NULL, 
-                             no_legend=F, n_facet_rows=NULL, facet_subset=NULL,
+                             pt.size=0.5, return_gg_object=FALSE, my_title=NULL,
+                             use_no_legend=F, n_facet_rows=NULL, facet_subset=NULL, foreground_subset_bool = NULL,
                              cont_or_disc = 'a', use_pointdensity = FALSE,
-                             pointdensity_subset=NULL, order=FALSE, shuffle=FALSE, 
-                             background_cells=FALSE, label=FALSE, box_col=NULL, convert_factors=FALSE,
+                             #pointdensity_subset=NULL, 
+                             do_order=FALSE, do_shuffle=FALSE, 
+                             show_background_cells=FALSE, do_label=FALSE, box_col=NULL, convert_factors=FALSE,
                              xlabel = 'UMAP 1', ylabel = 'UMAP 2'){
-  
+  #@param pointdensity_subset Only used if use_pointdensity=T. If NULL, use all cells. If set to groups within meta_features, only calculate density for these subgroups
   if(is.null(reduction)){
     stop('reduction must be either string specifying the reduction to use from seurat object or a dr_df data.frame')
   }
@@ -94,6 +95,12 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
     dr_df$data = ''
     goi = 'data'
   }
+  
+  if(!is.null(foreground_subset_bool)[1]){
+    if(!show_background_cells) warning('`foreground_subset_bool` will have no effect if `show_background_cells` = FALSE')
+    dr_df$foreground_subset_bool = foreground_subset_bool
+  }
+  
   
   cont_or_disc <- unlist(strsplit(cont_or_disc, split = ''))
   if(length(cont_or_disc) == 1){
@@ -210,16 +217,16 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
       }
     }
     
-    if(order){
+    if(do_order){
       dr_df = dr_df[order(dr_df[, goi[i]]), ]
     }
-    if(shuffle){
-      if(order) warning('Both `order` and `shuffle` are TRUE. Returning shuffled result.')
+    if(do_shuffle){
+      if(do_order) warning('Both `do_order` and `do_shuffle` are TRUE. Returning shuffled result.')
       dr_df = dr_df[sample(1:nrow(dr_df)), ]
     }
     
 
-    if(!is.null(facet_by) & background_cells){
+    if(!is.null(facet_by) & show_background_cells){
       stopifnot(facet_by %in% colnames(dr_df))
       fac_levels = unique(dr_df[, facet_by])
       if(!is.null(facet_subset[1])){
@@ -234,9 +241,15 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
       rm(dr_df_background_list)
       gg <- ggplot() + 
         geom_point(data = dr_df_background, aes(x=dim_1, y=dim_2), size=pt.size, alpha=alpha, color='grey80')
-    }else if(background_cells){
+      if(!is.null(foreground_subset_bool)[1]){
+        dr_df = dr_df[dr_df$foreground_subset_bool, ]
+      }
+    }else if(show_background_cells){
       gg <- ggplot() + 
         geom_point(data = dr_df, aes(x=dim_1, y=dim_2), size=pt.size, alpha=alpha, color='grey80')
+      if(!is.null(foreground_subset_bool)[1]){
+        dr_df = dr_df[dr_df$foreground_subset_bool, ]
+      }
     }else{
       gg = NULL
     }
@@ -250,33 +263,33 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
     
     if(use_pointdensity){
       if(!is.null(gg)){
-        if(any(pointdensity_subset %in% dr_df[, goi[i] ])){
-          gg = gg + 
-            ggpointdensity::geom_pointdensity(data = dr_df[dr_df[, goi[i]] %in% pointdensity_subset, ], mapping = aes(x=dim_1, y=dim_2), size=pt.size, alpha=alpha) +
-            coord_fixed() +  
-            scale_x_continuous(breaks=seq(floor(range_x[1]),ceiling(range_x[2]),2)) + 
-            scale_y_continuous(breaks=seq(floor(range_y[1]),ceiling(range_y[2]),2))
-        }else{
+        #if(any(pointdensity_subset %in% dr_df[, goi[i] ])){
+        #  gg = gg + 
+        #    ggpointdensity::geom_pointdensity(data = dr_df[dr_df[, goi[i]] %in% pointdensity_subset, ], mapping = aes(x=dim_1, y=dim_2), size=pt.size, alpha=alpha) +
+        #    coord_fixed() +  
+        #    scale_x_continuous(breaks=seq(floor(range_x[1]),ceiling(range_x[2]),2)) + 
+        #    scale_y_continuous(breaks=seq(floor(range_y[1]),ceiling(range_y[2]),2))
+        #}else{
           gg = gg + 
             ggpointdensity::geom_pointdensity(data = dr_df, mapping = aes(x=dim_1, y=dim_2), size=pt.size, alpha=alpha) +
             coord_fixed() +  
             scale_x_continuous(breaks=seq(floor(range_x[1]),ceiling(range_x[2]),2)) + 
             scale_y_continuous(breaks=seq(floor(range_y[1]),ceiling(range_y[2]),2))
-        }
+        #}
       }else{
-        if(any(pointdensity_subset %in% dr_df[, goi[i] ])){
-          gg = ggplot() + 
-            ggpointdensity::geom_pointdensity(data =  dr_df[dr_df[, goi[i]] %in% pointdensity_subset, ], mapping = aes(x=dim_1, y=dim_2), size=pt.size, alpha=alpha) +
-            coord_fixed() +  
-            scale_x_continuous(breaks=seq(floor(range_x[1]),ceiling(range_x[2]),2)) + 
-            scale_y_continuous(breaks=seq(floor(range_y[1]),ceiling(range_y[2]),2))
-        }else{
+        #if(any(pointdensity_subset %in% dr_df[, goi[i] ])){
+        #  gg = ggplot() + 
+        #    ggpointdensity::geom_pointdensity(data =  dr_df[dr_df[, goi[i]] %in% pointdensity_subset, ], mapping = aes(x=dim_1, y=dim_2), size=pt.size, alpha=alpha) +
+        #    coord_fixed() +  
+        #    scale_x_continuous(breaks=seq(floor(range_x[1]),ceiling(range_x[2]),2)) + 
+        #    scale_y_continuous(breaks=seq(floor(range_y[1]),ceiling(range_y[2]),2))
+        #}else{
           gg = ggplot() + 
             ggpointdensity::geom_pointdensity(data = dr_df, mapping = aes(x=dim_1, y=dim_2), size=pt.size, alpha=alpha) +
             coord_fixed() +  
             scale_x_continuous(breaks=seq(floor(range_x[1]),ceiling(range_x[2]),2)) + 
             scale_y_continuous(breaks=seq(floor(range_y[1]),ceiling(range_y[2]),2))
-        }
+        #}
       }
     }else{
       if(is.character(shape)){
@@ -353,7 +366,7 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
     if(is.theme(custom_theme)){
       gg <- gg + custom_theme
     }
-    if(no_legend){
+    if(use_no_legend){
       gg = gg + theme(legend.position='none')
     }
     if(!is.null(my_title)){
@@ -385,7 +398,7 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
     #   }
     # }
     
-    if(label & cont_or_disc[i] == 'd'){
+    if(do_label & cont_or_disc[i] == 'd'){
       gg$data[, goi[i]] = as.factor(gg$data[, goi[i]])
       gg = .LabelClusters(gg, goi[i], box = T, col_use = box_col)
     }
