@@ -28,12 +28,12 @@
 #' @param cont_or_disc string of length 1 or length n features indicating whether the features are continuous 'c' or discrete 'd'. Try to set this manually, when the function fails. Otherwise, set to 'a' to automatically determine c or d for each feature.
 #' @param use_pointdensity colour by pointdensity using the ggpointdensity package. 
 #' @param show_background_cells bool, works if foreground_subset_bool is specified. Also when using facets, include the cells not part of the facet as grey background 
-#' @param foreground_subset_bool boolean vector with same length as number of cells. If show_background_cells=TRUE, show all cells with FALSE as grey background. Do also exlcude those cells for pointdensity calculation, if use_pointdensity=TRUE
+#' @param foreground_subset_bool boolean vector with same length as number of cells. If show_background_cells=TRUE, show all cells with FALSE as grey background. Do also exlcude those cells for pointdensity calculation, if use_pointdensity=TRUE. Currently not working with do_label=T
 #' @param facet_subset Only used when facet_by not NULL Only plot the facets for the groups supplied here. Background cells are still shown for the whole dataset 
 #' @param do_order bool, order points so that largest values are on top
 #' @param do_shuffle bool, randomly shuffle the plotting order. Supersedes do_order.
-#' @param do_label add boxes with labels to the discrete variable
-#' @param box_col colour to fill boxes, if do_label = T. If NULL, use colours from the respective groups
+#' @param label_type one of geom_text, geom_text_repel, geom_label, geom_label_repel
+#' @param label_col colour to fill boxes, if do_label = T. If NULL, use colours from the respective groups
 #' @param xlabel x axis label, default: UMAP 1
 #' @param ylabel y axis label, default: UMAP 2
 #' @keywords plot
@@ -43,14 +43,17 @@
 #' jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, shape=15, my_title='fruits')
 #' jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, facet_by='fruit', n_facet_rows=2)
 #' jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, facet_by='dish')
-#' jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, custom_colors=c(Apple='green', Banana='yellow'), do_label=T)
+#' jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, custom_colors=c(Apple='green', Banana='yellow'))
 #' jj_plot_features(pbmc_small, reduction='tsne', features=c('MS4A1', 'CD79A'), cap_top='q95', colorScale='viridis', pt.size = 2, xlabel='tsne_1', ylabel='tsne_2',my_title=c('tnse: MS4A1','tsne: CD79A'))
 #' df2 = data.frame(a=rnorm(100, 0, 5), b=rnorm(100, 0, 5), d=rbinom(100, 50, 0.3), e = sample(c('A','B', 'C'), 100, replace=T))
 #' jj_plot_features(reduction=df2, meta_features=c('d'), pt.size=4, facet_by = 'e', show_background_cells = T, do_order=T, custom_theme = theme_bw())
 #' jj_plot_features(reduction=df2, meta_features='e', pt.size=4, facet_by = 'e', use_pointdensity = T, do_order=T, custom_theme = theme_bw())
 #' jj_plot_features(reduction=df2, meta_features='e', pt.size=4, use_pointdensity = T, foreground_subset_bool = df2$e %in% c('B','C'),show_background_cells=T, do_order=T, custom_theme = theme_bw())
 #' jj_plot_features(reduction=df2, meta_features='e', pt.size=4, use_pointdensity = T, foreground_subset_bool = df2$e %in% c('B','C'), show_background_cells=T, facet_by = 'e', facet_subset = c('A','B'), custom_theme = theme_bw())
-#'
+#' data_df = data.frame(x=c(rnorm(200, 5), rnorm(70,2), rnorm(50,2.5, 2)), y=c(rnorm(200, 5), rnorm(70,-2), rnorm(50,2.5,2)), clusterIdent = c(rep('gr1', 200), rep('gr2', 70), rep('gr3', 50)), groupVar = c(rep('AA', 180), rep('BB', 140)))
+#' mycols = structure(c('red','green', 'pink'), names = c('gr1','gr2','gr3'))
+#' jj_plot_features(reduction = data_df, meta_features = 'clusterIdent', return_gg_object = T, pt.size = 2,
+#'                  facet_by = 'groupVar', label_type = 'geom_label_repel', label_subset = c('gr1','gr2'), custom_colors=mycols)[[1]]
 
 jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, meta_features=NULL,
                              assay=NULL, slot='data', 
@@ -62,7 +65,7 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
                              cont_or_disc = 'a', use_pointdensity = FALSE,
                              #pointdensity_subset=NULL, 
                              do_order=FALSE, do_shuffle=FALSE, 
-                             show_background_cells=FALSE, do_label=FALSE, box_col=NULL, convert_factors=FALSE,
+                             show_background_cells=FALSE, label_type=NULL, label_subset = NULL, label_col=NULL, convert_factors=FALSE,
                              xlabel = 'UMAP 1', ylabel = 'UMAP 2'){
   #@param pointdensity_subset Only used if use_pointdensity=T. If NULL, use all cells. If set to groups within meta_features, only calculate density for these subgroups
   if(is.null(reduction)){
@@ -378,6 +381,20 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
       }
     }
     
+    if(!is.null(label_type) & cont_or_disc[i] == 'd'){
+      #gg$data[, goi[i]] = as.factor(gg$data[, goi[i]])
+      #gg = .LabelClusters(gg, goi[i], box = T, col_use = box_col)
+      #centroid_df = get_centroids(dr_df, id = goi[i], id_subset = label_subset, facet_by = facet_by)
+      if(!is.null(label_col)){
+        custom_colors = label_col
+      }
+      if(is.null(custom_colors)){
+        custom_colors = 'grey50'
+      }
+      gg = add_labels(gg = gg, df = dr_df, id = goi[i], id_subset = label_subset,
+                      facet_by = facet_by, col_vec = custom_colors, label_type = label_type, alpha = 0.9)    
+    }
+    
     if(!is.null(facet_by)){
       if(facet_by %in% colnames(dr_df) & n_distinct(dr_df[, facet_by]) < 100){
         message(sprintf('Facetting by %s.', facet_by))
@@ -398,10 +415,7 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
     #   }
     # }
     
-    if(do_label & cont_or_disc[i] == 'd'){
-      gg$data[, goi[i]] = as.factor(gg$data[, goi[i]])
-      gg = .LabelClusters(gg, goi[i], box = T, col_use = box_col)
-    }
+
     
     if(return_gg_object){
       gg_list[[i]] <- gg
@@ -414,184 +428,77 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
   }
 }
 
-#' @export
-.LabelClusters = function(
-  #function from Seurat to label clusters
-  #additional:
-  #1 check is done: if id is not factor, stop. In original function this results in another
-  #error message difficult to understand
-  #2 convert factor to character, otherwise custom labels results in error due to invalid factor levels
-  plot,
-  id,
-  clusters = NULL,
-  labels = NULL,
-  split.by = NULL,
-  repel = TRUE,
-  box = FALSE,
-  geom = 'GeomPoint',
-  position = "median",
-  col_use = NULL,
-  ...
-) {
-  #dr_df <- get_reduction_coords(seurat_atac, 'umap')
-  #dr_df$singler_label = as.factor(dr_df$singler_label)
-  #gg = ggplot(dr_df[1:10, ], aes(x=dim_1, y=dim_2)) + geom_point(aes(colour=singler_label))
-  #LabelClusters(gg, id='singler_label')
-  if(repel) library(ggrepel)
-  `%||%` <- function(lhs, rhs) {
-    if (!is.null(x = lhs)) {
-      return(lhs)
-    } else {
-      return(rhs)
-    }
-  }
-  
-  GetXYAesthetics <- function(plot, geom = 'GeomPoint', plot.first = TRUE) {
-    geoms <- sapply(
-      X = plot$layers,
-      FUN = function(layer) {
-        return(class(x = layer$geom)[1])
-      }
-    )
-    geoms <- which(x = geoms == geom)
-    if (length(x = geoms) == 0) {
-      stop("Cannot find a geom of class ", geom)
-    }
-    geoms <- min(geoms)
-    if (plot.first) {
-      x <- as.character(x = plot$mapping$x %||% plot$layers[[geoms]]$mapping$x)[2]
-      y <- as.character(x = plot$mapping$y %||% plot$layers[[geoms]]$mapping$y)[2]
-    } else {
-      x <- as.character(x = plot$layers[[geoms]]$mapping$x %||% plot$mapping$x)[2]
-      y <- as.character(x = plot$layers[[geoms]]$mapping$y %||% plot$mapping$y)[2]
-    }
-    return(list('x' = x, 'y' = y))
-  }
-  
-  xynames <- unlist(x = GetXYAesthetics(plot = plot, geom = geom), use.names = TRUE)
-  if (!id %in% colnames(x = plot$data)) {
-    stop("Cannot find variable ", id, " in plotting data")
-  }
-  if (!is.null(x = split.by) && !split.by %in% colnames(x = plot$data)) {
-    warning("Cannot find splitting variable ", id, " in plotting data")
-    split.by <- NULL
-  }
-  data <- plot$data[, c(xynames, id, split.by)]
-  
-  #own condition:
-  if(!is.factor(data[, id])){
-    stop('id needs to be a factor')
-  }
-  
-  possible.clusters <- as.character(x = na.omit(object = unique(x = data[, id])))
-  groups <- clusters %||% as.character(x = na.omit(object = unique(x = data[, id])))
-  if (any(!groups %in% possible.clusters)) {
-    stop("The following clusters were not found: ", paste(groups[!groups %in% possible.clusters], collapse = ","))
-  }
-  pb <- ggplot_build(plot = plot)
-  if (geom == 'GeomSpatial') {
-    data[, xynames["y"]] = max(data[, xynames["y"]]) - data[, xynames["y"]] + min(data[, xynames["y"]])
-    if (!pb$plot$plot_env$crop) {
-      y.transform <- c(0, nrow(x = pb$plot$plot_env$image)) - pb$layout$panel_params[[1]]$y.range
-      data[, xynames["y"]] <- data[, xynames["y"]] + sum(y.transform)
-    }
-  }
-  data <- cbind(data, color = pb$data[[1]][[1]])
-  labels.loc <- lapply(
-    X = groups,
-    FUN = function(group) {
-      data.use <- data[data[, id] == group, , drop = FALSE]
-      data.medians <- if (!is.null(x = split.by)) {
-        do.call(
-          what = 'rbind',
-          args = lapply(
-            X = unique(x = data.use[, split.by]),
-            FUN = function(split) {
-              medians <- apply(
-                X = data.use[data.use[, split.by] == split, xynames, drop = FALSE],
-                MARGIN = 2,
-                FUN = median,
-                na.rm = TRUE
-              )
-              medians <- as.data.frame(x = t(x = medians))
-              medians[, split.by] <- split
-              return(medians)
-            }
-          )
-        )
-      } else {
-        as.data.frame(x = t(x = apply(
-          X = data.use[, xynames, drop = FALSE],
-          MARGIN = 2,
-          FUN = median,
-          na.rm = TRUE
-        )))
-      }
-      data.medians[, id] <- group
-      data.medians$color <- data.use$color[1]
-      return(data.medians)
-    }
-  )
-  if (position == "nearest") {
-    labels.loc <- lapply(X = labels.loc, FUN = function(x) {
-      group.data <- data[as.character(x = data[, id]) == as.character(x[3]), ]
-      nearest.point <- nn2(data = group.data[, 1:2], query = as.matrix(x = x[c(1,2)]), k = 1)$nn.idx
-      x[1:2] <- group.data[nearest.point, 1:2]
-      return(x)
-    })
-  }
-  labels.loc <- do.call(what = 'rbind', args = labels.loc)
-  labels.loc[, id] <- factor(x = labels.loc[, id], levels = levels(data[, id]))
-  labels <- labels %||% groups
-  if (length(x = unique(x = labels.loc[, id])) != length(x = labels)) {
-    stop("Length of labels (", length(x = labels),  ") must be equal to the number of clusters being labeled (", length(x = labels.loc), ").")
-  }
-  names(x = labels) <- groups
-  #convert factor to character, otherwise custom labels results in error due to invalid factor levels
-  labels.loc[, id] = as.character(labels.loc[, id])
-  
-  for (group in groups) {
-    labels.loc[labels.loc[, id] == group, id] <- labels[group]
-  }
-  if (box) {
-    geom.use <- ifelse(test = repel, yes = geom_label_repel, no = geom_label)
-    if(!is.null(col_use)){
-      plot <- plot + geom.use(
-        data = labels.loc,
-        mapping = aes_string(x = xynames['x'], y = xynames['y'], label = id), fill = col_use,
-        show.legend = FALSE,
-        ...
-      )
-    }else{
-      plot <- plot + geom.use(
-        data = labels.loc,
-        mapping = aes_string(x = xynames['x'], y = xynames['y'], label = id, fill = id),
-        show.legend = FALSE,
-        ...
-      ) + scale_fill_manual(values = labels.loc$color[order(labels.loc[, id])])
-    }
-  } else {
-    geom.use <- ifelse(test = repel, yes = geom_text_repel, no = geom_text)
-    if(!is.null(col_use)){
-      plot <- plot + geom.use(
-        data = labels.loc,
-        mapping = aes_string(x = xynames['x'], y = xynames['y'], label = id), colour=col_use,
-        show.legend = FALSE,
-        ...
-      )
-    }else{
-      plot <- plot + geom.use(
-        data = labels.loc,
-        mapping = aes_string(x = xynames['x'], y = xynames['y'], label = id, colour=id),
-        show.legend = FALSE,
-        ...
-      )
-    }
-  }
-  return(plot)
-}
 
 #TODO replace repetitions of code with this helper function
 cget_scale_midpoint = function(feat){
   (max(feat, na.rm = T) + min(feat, na.rm = T)) / 2 
+}
+
+
+get_centroids = function(df, id, id_subset=NULL, facet_by = NULL){
+  stopifnot(id %in% colnames(df))
+  stopifnot(facet_by %in% colnames(df))
+  get_medians = function(df){df %>% dplyr::group_by(group) %>% dplyr::summarise(dim1=median(dim1), dim2=median(dim2)) }
+  #id_subset: user defined subset of id values to highlight
+  if(!is.null(facet_by)){
+    df = as.data.frame(df[,c(colnames(df)[1:2], id, facet_by)])
+    colnames(df) = c('dim1','dim2','group', 'splitvar')
+    facet_list = list()
+    df_list = split(df, df$splitvar)
+    for(i in seq_along(df_list)){
+      df_list[[i]] = get_medians(df_list[[i]])
+      df_list[[i]][, facet_by] = names(df_list)[i]
+    }
+    centroid_df = do.call(rbind, df_list)
+  }else{
+    df = as.data.frame(df[,c(colnames(df)[1:2], id)])
+    colnames(df) = c('dim1','dim2','group')
+    centroid_df = get_medians(df)
+  }
+
+  if(!is.null(id_subset)){
+    stopifnot(all(id_subset %in% centroid_df$group))
+    centroid_df = centroid_df[centroid_df$group %in% id_subset, ]
+  }
+  
+  centroid_df = dplyr::select(centroid_df, dim1, dim2, group, everything()) %>% as.data.frame
+  centroid_df
+}
+ 
+#' @export
+add_labels = function(gg, df, id, id_subset=NULL, facet_by = NULL, col_vec='white', label_type='geom_label_repel', alpha=1){
+  #colnames(label_df) = c('dim1', 'dim2','group')
+  label_type = match.arg(label_type, choices = c('geom_text', 'geom_text_repel', 'geom_label', 'geom_label_repel'))
+  label_df = get_centroids(df, id = id, id_subset = id_subset, facet_by = facet_by)
+  library(ggrepel)
+  if(label_type == 'geom_label_repel'){
+    if(length(col_vec) == 1){
+      gg = gg + geom_label_repel(data = label_df, mapping = aes(x=dim1, y = dim2, label=group), fill = col_vec, alpha=alpha, show.legend = F)
+    }else{
+      gg = gg + geom_label_repel(data = label_df, mapping = aes(x=dim1, y = dim2, label=group, fill=group), alpha=alpha, show.legend = F) + 
+        scale_fill_manual(values = col_vec)
+    }
+  }else if(label_type == 'geom_text_repel'){
+    if(length(col_vec) == 1){
+      gg = gg + geom_text_repel(data = label_df, mapping = aes(x=dim1, y = dim2, label=group), colour = col_vec, alpha=alpha, show.legend = F)
+    }else{
+      gg = gg + geom_text_repel(data = label_df, mapping = aes(x=dim1, y = dim2, label=group, colour=group), alpha=alpha, show.legend = F) + 
+        scale_fill_manual(values = col_vec)
+    }
+  }else if(label_type == 'geom_label'){
+    if(length(col_vec) == 1){
+      gg = gg + geom_label(data = label_df, mapping = aes(x=dim1, y = dim2, label=group), fill = col_vec, alpha=alpha, show.legend = F)
+    }else{
+      gg = gg + geom_label(data = label_df, mapping = aes(x=dim1, y = dim2, label=group, fill=group), alpha=alpha, show.legend = F) + 
+        scale_fill_manual(values = col_vec)
+    }
+  }else if(label_type == 'geom_text'){
+    if(length(col_vec) == 1){
+      gg = gg + geom_text(data = label_df, mapping = aes(x=dim1, y = dim2, label=group), colour = col_vec, alpha=alpha, show.legend = F)
+    }else{
+      gg = gg + geom_text(data = label_df, mapping = aes(x=dim1, y = dim2, label=group, colour=group), alpha=alpha, show.legend = F) + 
+        scale_fill_manual(values = col_vec)
+    }
+  }
+  gg
 }
