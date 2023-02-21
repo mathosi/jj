@@ -391,7 +391,7 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
       if(is.null(custom_colors)){
         custom_colors = 'grey50'
       }
-      gg = add_labels(gg = gg, df = dr_df, id = goi[i], id_subset = label_subset,
+      gg = jj_add_labels(gg = gg, df = dr_df, id = goi[i], id_subset = label_subset,
                       facet_by = facet_by, col_vec = custom_colors, label_type = label_type, alpha = 0.9)    
     }
     

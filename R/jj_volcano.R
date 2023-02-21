@@ -230,8 +230,8 @@ jj_volcano_plot = function(plot_df, logfc_column, pval_column, symbol_column=NUL
   if(!is.null(group_names[1])){
     g1 = g1 + annotate('segment', x = arrow_pos$x, xend = arrow_pos$xend, y = arrow_pos$y, yend = arrow_pos$y,  arrow = arrow(type = "closed", length = unit(0.02, "npc"))) +
       annotate('segment', x = -arrow_pos$x, xend = -arrow_pos$xend, y = arrow_pos$y, yend = arrow_pos$y,  arrow = arrow(type = "closed", length = unit(0.02, "npc"))) +
-      annotate('text', x = arrow_pos$xend+0.1, y = arrow_pos$y, label = sprintf('%s (%i genes)', group_names[1], label_df$n[1]), hjust = 0, size=3) + 
-      annotate('text', x = -arrow_pos$xend-0.1, y = arrow_pos$y, label = sprintf('%s (%i genes)', group_names[2], label_df$n[2]), hjust = 1, size = 3)
+      annotate('text', x = arrow_pos$xend+0.01, y = arrow_pos$y, label = sprintf('%s (%i genes)', group_names[1], label_df$n[1]), hjust = 0, size=3) + 
+      annotate('text', x = -arrow_pos$xend-0.01, y = arrow_pos$y, label = sprintf('%s (%i genes)', group_names[2], label_df$n[2]), hjust = 1, size = 3)
   }
   
   g1 = g1 + labs(y = paste(pval_column, '(-log10)'))
