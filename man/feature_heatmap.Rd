@@ -11,11 +11,13 @@ jj_plot_heatmap(
   features_use,
   group_vec,
   scale_data = TRUE,
-  top_annot = NULL,
+  show_top_annot = TRUE,
   row_annot = NULL,
   return_matrix = FALSE,
   cluster_rows = T,
-  cluster_columns = T
+  cluster_columns = T,
+  transpose = F,
+  ...
 )
 
 jj_plot_dotplot(
@@ -38,6 +40,12 @@ jj_plot_dotplot(
 
 \item{scale_data}{scale feature-wise (i.e. the columns of the heatmap)}
 
+\item{show_top_annot}{if TRUE and features_use is a named vector, the names are used as top annotation}
+
+\item{row_annot}{either TRUE/FALSE to show colour bar by group from group_vec or a HeatmapAnnotation object}
+
+\item{transpose}{if TRUE, transpose the heatmap and show features as rows}
+
 \item{column_colors}{}
 }
 \description{
@@ -45,5 +53,10 @@ feature heatmap
 }
 \examples{
 jj_plot_heatmap(pbmc_small, features_use = c('CD8A','KLRG1','CD79A','CD79B','CD3E'), group_vec = pbmc_small$groups, scale_data=F)
+#pass named vector to features_use to show column annotation
+jj_plot_heatmap(GetAssayData(pbmc_small), features_use = c(T='CD8A',T='KLRG1',B='CD79A',B='CD79B',T='CD3E', myeloid = 'CD14'), group_vec = pbmc_small$groups, row_annot = T)
+#when transposing the heatmap, the row_annot is shown as top annotation
+jj_plot_heatmap(GetAssayData(pbmc_small), features_use = c('CD8A','KLRG1','CD79A','CD79B','CD3E'), group_vec = pbmc_small$groups, transpose = T, row_annot = T)
+jj_plot_heatmap(GetAssayData(pbmc_small), features_use = c('CD8A','KLRG1','CD79A','CD79B','CD3E'), group_vec = pbmc_small$groups, transpose = T, row_annot = HeatmapAnnotation(myannot = c('Group1', 'Group2'), col = list(myannot = c(Group1='green', Group2='cyan'))))
 jj_plot_dotplot(GetAssayData(pbmc_small), features_use = c('CD8A','KLRG1','CD79A','CD79B','CD3E'), group_vec = pbmc_small$groups)
 }

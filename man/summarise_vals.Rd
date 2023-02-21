@@ -42,7 +42,7 @@ jj_volcano_plot(
   logfc_column,
   pval_column,
   symbol_column = NULL,
-  marker_thres = 0.5,
+  marker_thres = c(0.5, Inf),
   labs_range = c(-1, 1),
   alpha = 1,
   pt.size = 2.5,
@@ -53,7 +53,9 @@ jj_volcano_plot(
   only_highlight = FALSE,
   col_by_highlight = FALSE,
   use_text = TRUE,
-  add_thres_line = FALSE
+  add_thres_line = FALSE,
+  group_names = NULL,
+  arrow_pos = list(x = 0.25, xend = 1, y = 40)
 )
 }
 \arguments{

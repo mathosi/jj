@@ -13,6 +13,9 @@ jj_get_contour_lines(reduction_df, grouping_var, cont_thres)
 
 \item{cont_thres}{value to put into every cell}
 }
+\value{
+
+}
 \description{
 estimate densities to include density area in tsne/umap.
 May fail for small datasets

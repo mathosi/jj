@@ -30,7 +30,9 @@ jj_plot_sparse_by_group(
   type = "violin",
   custom_colors = NULL,
   order = FALSE,
-  flip_coordinates = FALSE
+  flip_coordinates = FALSE,
+  cap_top = NULL,
+  ...
 )
 
 jj_plot_numeric_by_group(
@@ -44,7 +46,8 @@ jj_plot_numeric_by_group(
   theme_use = theme_minimal(),
   type = "violin",
   order = FALSE,
-  flip_coordinates = FALSE
+  flip_coordinates = FALSE,
+  ...
 )
 
 jj_plot_categorical_by_group(
@@ -56,7 +59,9 @@ jj_plot_categorical_by_group(
   return_df = FALSE,
   flip_coordinates = FALSE,
   add_text = FALSE,
-  theme_use = theme_minimal()
+  text_size = 5,
+  theme_use = theme_minimal(),
+  ...
 )
 }
 \arguments{
@@ -65,6 +70,8 @@ jj_plot_categorical_by_group(
 \item{gene_plot}{Gene from the RNA matrix to plot}
 
 \item{group_column}{string of the column with the variable used to group the feature}
+
+\item{...}{further arguments passed to the main geom of ggplot}
 
 \item{group_vec}{Vector of strings with the grouping information}
 
@@ -88,6 +95,8 @@ jj_plot_categorical_by_group(
 
 \item{flip_coordinates}{flip coordinate system}
 
+\item{cap_top}{cap the values at a quantile or fixed value}
+
 \item{df}{data.frame containing the columns passed in feature_column and group_column}
 
 \item{feature_column}{string of the column with feature that should be quantified}
@@ -95,6 +104,8 @@ jj_plot_categorical_by_group(
 \item{absolute_numbers}{if TRUE, plot absolute counts per category instead of relative fractions per group}
 
 \item{return_df}{if TRUE, instead of plotting, return the data.frame with the data}
+
+\item{text_size}{size of numbers in plots}
 }
 \description{
 Plot a gene/numeric/categorical feature by group as violin or boxplot

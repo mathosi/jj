@@ -2,7 +2,7 @@
 #'
 #'
 #' @param annotation_vector vector with the groups for which colours are needed
-#' @param colour_csv two column csv with annotation in first column and colour in second column (alternatively a data.frame with columns `group` and `colour`)
+#' @param colour_csv two column csv with annotation in first column and colour in second column (alternatively a data.frame with columns `group` and `colour` or a named vector of colours)
 #' @param plot_colours visualize colours as ggplot heatmap, default = FALSE
 #' @param comment_char Lines in the colour file starting with this character are ignored, default = '/'
 #' @export
@@ -24,6 +24,8 @@ jj_get_colours = function(annotation_vector=NULL, colour_csv, plot_colours=FALSE
   if(is.data.frame(colour_csv)){
     stopifnot(identical(colnames(colour_csv), c('group', 'colour')))
     col_df = as.data.frame(colour_csv)
+  }else if(is.character(colour_csv) & !is.null(names(colour_csv))){
+    col_df = data.frame(group=names(colour_csv), colour=colour_csv)
   }else{
     col_df = read.csv(colour_csv, header = F, col.names = c('group', 'colour'), strip.white = T, blank.lines.skip = T, comment.char = comment_char)
   }

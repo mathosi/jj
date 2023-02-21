@@ -22,17 +22,21 @@ jj_plot_features(
   pt.size = 0.5,
   return_gg_object = FALSE,
   my_title = NULL,
-  no_legend = F,
+  use_no_legend = F,
   n_facet_rows = NULL,
   facet_subset = NULL,
+  foreground_subset_bool = NULL,
   cont_or_disc = "a",
   use_pointdensity = FALSE,
-  pointdensity_subset = NULL,
-  order = FALSE,
-  background_cells = FALSE,
-  label = FALSE,
-  box_col = NULL,
-  convert_factors = FALSE
+  do_order = FALSE,
+  do_shuffle = FALSE,
+  show_background_cells = FALSE,
+  label_type = NULL,
+  label_subset = NULL,
+  label_col = NULL,
+  convert_factors = FALSE,
+  xlabel = "UMAP 1",
+  ylabel = "UMAP 2"
 )
 }
 \arguments{
@@ -70,25 +74,31 @@ jj_plot_features(
 
 \item{my_title}{optional title for the ggplot}
 
-\item{no_legend}{omit legend, default: FALSE}
+\item{use_no_legend}{omit legend, default: FALSE}
 
 \item{n_facet_rows}{number of rows for facetted plots}
 
-\item{facet_subset}{Only used when facet_by not FALSE. Only plot the facets for the groups supplied here. Background cells are still shown for the whole dataset}
+\item{facet_subset}{Only used when facet_by not NULL Only plot the facets for the groups supplied here. Background cells are still shown for the whole dataset}
+
+\item{foreground_subset_bool}{boolean vector with same length as number of cells. If show_background_cells=TRUE, show all cells with FALSE as grey background. Do also exlcude those cells for pointdensity calculation, if use_pointdensity=TRUE. Currently not working with do_label=T}
 
 \item{cont_or_disc}{string of length 1 or length n features indicating whether the features are continuous 'c' or discrete 'd'. Try to set this manually, when the function fails. Otherwise, set to 'a' to automatically determine c or d for each feature.}
 
 \item{use_pointdensity}{colour by pointdensity using the ggpointdensity package.}
 
-\item{pointdensity_subset}{Only used if use_pointdensity=T. If NULL, use all cells. If set to groups within meta_features, only calculate density for these subgroups}
+\item{do_order}{bool, order points so that largest values are on top}
 
-\item{order}{order points so that largest values are on top}
+\item{do_shuffle}{bool, randomly shuffle the plotting order. Supersedes do_order.}
 
-\item{background_cells}{when using facets, include the cells not part of the facet as grey background}
+\item{show_background_cells}{bool, works if foreground_subset_bool is specified. Also when using facets, include the cells not part of the facet as grey background}
 
-\item{label}{add boxes with labels to the discrete variable}
+\item{label_type}{one of geom_text, geom_text_repel, geom_label, geom_label_repel}
 
-\item{box_col}{colour to fill boxes, if label = T. If NULL, use colours from the respective groups}
+\item{label_col}{colour to fill boxes, if do_label = T. If NULL, use colours from the respective groups}
+
+\item{xlabel}{x axis label, default: UMAP 1}
+
+\item{ylabel}{y axis label, default: UMAP 2}
 }
 \description{
 Extension of the functionalities provided by Seurats FeaturePlot/DimPlot functions
@@ -102,13 +112,16 @@ df = data.frame(umap1=c(1,5,3), umap2=c(2,5,2), fruit=c('Apple', 'Banana', 'Appl
 jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, shape=15, my_title='fruits')
 jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, facet_by='fruit', n_facet_rows=2)
 jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, facet_by='dish')
-jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, custom_colors=c(Apple='green', Banana='yellow'), label=T)
-jj_plot_features(seurat_rna, features=c('CD4', 'CD8A'), cap_top='q95', colorScale='viridis')
+jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, custom_colors=c(Apple='green', Banana='yellow'))
+jj_plot_features(pbmc_small, reduction='tsne', features=c('MS4A1', 'CD79A'), cap_top='q95', colorScale='viridis', pt.size = 2, xlabel='tsne_1', ylabel='tsne_2',my_title=c('tnse: MS4A1','tsne: CD79A'))
 df2 = data.frame(a=rnorm(100, 0, 5), b=rnorm(100, 0, 5), d=rbinom(100, 50, 0.3), e = sample(c('A','B', 'C'), 100, replace=T))
-jj_plot_features(reduction=df2, meta_features=c('d'), pt.size=4, facet_by = 'e', background_cells = T, order=T, custom_theme = theme_bw())
-jj_plot_features(reduction=df2, meta_features='e', pt.size=4, facet_by = 'e', use_pointdensity = T, order=T, custom_theme = theme_bw())
-jj_plot_features(reduction=df2, meta_features='e', pt.size=4, use_pointdensity = T, pointdensity_subset = c('B','C'), order=T, custom_theme = theme_bw())
-jj_plot_features(reduction=df2, meta_features='e', pt.size=4, use_pointdensity = T, pointdensity_subset = c('B','C'), background_cells=T, order=T, custom_theme = theme_bw())
-
+jj_plot_features(reduction=df2, meta_features=c('d'), pt.size=4, facet_by = 'e', show_background_cells = T, do_order=T, custom_theme = theme_bw())
+jj_plot_features(reduction=df2, meta_features='e', pt.size=4, facet_by = 'e', use_pointdensity = T, do_order=T, custom_theme = theme_bw())
+jj_plot_features(reduction=df2, meta_features='e', pt.size=4, use_pointdensity = T, foreground_subset_bool = df2$e \%in\% c('B','C'),show_background_cells=T, do_order=T, custom_theme = theme_bw())
+jj_plot_features(reduction=df2, meta_features='e', pt.size=4, use_pointdensity = T, foreground_subset_bool = df2$e \%in\% c('B','C'), show_background_cells=T, facet_by = 'e', facet_subset = c('A','B'), custom_theme = theme_bw())
+data_df = data.frame(x=c(rnorm(200, 5), rnorm(70,2), rnorm(50,2.5, 2)), y=c(rnorm(200, 5), rnorm(70,-2), rnorm(50,2.5,2)), clusterIdent = c(rep('gr1', 200), rep('gr2', 70), rep('gr3', 50)), groupVar = c(rep('AA', 180), rep('BB', 140)))
+mycols = structure(c('red','green', 'pink'), names = c('gr1','gr2','gr3'))
+jj_plot_features(reduction = data_df, meta_features = 'clusterIdent', return_gg_object = T, pt.size = 2,
+                 facet_by = 'groupVar', label_type = 'geom_label_repel', label_subset = c('gr1','gr2'), custom_colors=mycols)[[1]]
 }
 \keyword{plot}

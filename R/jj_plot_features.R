@@ -429,45 +429,50 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
 }
 
 
-#TODO replace repetitions of code with this helper function
-cget_scale_midpoint = function(feat){
-  (max(feat, na.rm = T) + min(feat, na.rm = T)) / 2 
-}
+# #TODO replace repetitions of code with this helper function
+# cget_scale_midpoint = function(feat){
+#   (max(feat, na.rm = T) + min(feat, na.rm = T)) / 2 
+# }
 
-
-get_centroids = function(df, id, id_subset=NULL, facet_by = NULL){
-  stopifnot(id %in% colnames(df))
-  stopifnot(facet_by %in% colnames(df))
-  get_medians = function(df){df %>% dplyr::group_by(group) %>% dplyr::summarise(dim1=median(dim1), dim2=median(dim2)) }
-  #id_subset: user defined subset of id values to highlight
-  if(!is.null(facet_by)){
-    df = as.data.frame(df[,c(colnames(df)[1:2], id, facet_by)])
-    colnames(df) = c('dim1','dim2','group', 'splitvar')
-    facet_list = list()
-    df_list = split(df, df$splitvar)
-    for(i in seq_along(df_list)){
-      df_list[[i]] = get_medians(df_list[[i]])
-      df_list[[i]][, facet_by] = names(df_list)[i]
-    }
-    centroid_df = do.call(rbind, df_list)
-  }else{
-    df = as.data.frame(df[,c(colnames(df)[1:2], id)])
-    colnames(df) = c('dim1','dim2','group')
-    centroid_df = get_medians(df)
-  }
-
-  if(!is.null(id_subset)){
-    stopifnot(all(id_subset %in% centroid_df$group))
-    centroid_df = centroid_df[centroid_df$group %in% id_subset, ]
-  }
-  
-  centroid_df = dplyr::select(centroid_df, dim1, dim2, group, everything()) %>% as.data.frame
-  centroid_df
-}
- 
 #' @export
-add_labels = function(gg, df, id, id_subset=NULL, facet_by = NULL, col_vec='white', label_type='geom_label_repel', alpha=1){
-  #colnames(label_df) = c('dim1', 'dim2','group')
+jj_add_labels = function(gg, df, id, id_subset=NULL, facet_by = NULL, col_vec='grey50', label_type='geom_label_repel', alpha=0.9){
+  #gg ggplot object
+  #df data.frame with columns in the order: x-coordinate, y-coordinate, id-column, (facet-column)
+  #id column in df for which labels should be created
+  #id_subset Values in the id column, for which labels should be created. If not specified, plot labels for all values in the id column
+  #facet_by if plot has facets, the facet column name should be specified here
+  #col_vec either one colour for all text/boxes, or a named vector of colors for each single value in id
+  #label type geom_text, geom_label, geom_text_repel or geom_label_repel
+  #alpha alpha level for the boxes/text
+  get_centroids = function(df, id, id_subset=NULL, facet_by = NULL){
+    stopifnot(id %in% colnames(df))
+    stopifnot(facet_by %in% colnames(df))
+    get_medians = function(df){df %>% dplyr::group_by(group) %>% dplyr::summarise(dim1=median(dim1), dim2=median(dim2)) }
+    #id_subset: user defined subset of id values to highlight
+    if(!is.null(facet_by)){
+      df = as.data.frame(df[,c(colnames(df)[1:2], id, facet_by)])
+      colnames(df) = c('dim1','dim2','group', 'splitvar')
+      facet_list = list()
+      df_list = split(df, df$splitvar)
+      for(i in seq_along(df_list)){
+        df_list[[i]] = get_medians(df_list[[i]])
+        df_list[[i]][, facet_by] = names(df_list)[i]
+      }
+      centroid_df = do.call(rbind, df_list)
+    }else{
+      df = as.data.frame(df[,c(colnames(df)[1:2], id)])
+      colnames(df) = c('dim1','dim2','group')
+      centroid_df = get_medians(df)
+    }
+    
+    if(!is.null(id_subset)){
+      stopifnot(all(id_subset %in% centroid_df$group))
+      centroid_df = centroid_df[centroid_df$group %in% id_subset, ]
+    }
+    
+    centroid_df = dplyr::select(centroid_df, dim1, dim2, group, everything()) %>% as.data.frame
+    centroid_df
+  }
   label_type = match.arg(label_type, choices = c('geom_text', 'geom_text_repel', 'geom_label', 'geom_label_repel'))
   label_df = get_centroids(df, id = id, id_subset = id_subset, facet_by = facet_by)
   library(ggrepel)

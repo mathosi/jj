@@ -16,6 +16,9 @@ j(obj, show_max = 3, headtail = NULL, print_nested = FALSE)
 \description{
 Works for all R objects in contrast to head().
 }
+\examples{
+
+}
 \keyword{glimpse}
 \keyword{head,}
 \keyword{overview,}

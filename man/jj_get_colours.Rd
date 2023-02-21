@@ -14,7 +14,7 @@ jj_get_colours(
 \arguments{
 \item{annotation_vector}{vector with the groups for which colours are needed}
 
-\item{colour_csv}{two column csv with annotation in first column and colour in second column (alternatively a data.frame with columns \code{group} and \code{colour})}
+\item{colour_csv}{two column csv with annotation in first column and colour in second column (alternatively a data.frame with columns \code{group} and \code{colour} or a named vector of colours)}
 
 \item{plot_colours}{visualize colours as ggplot heatmap, default = FALSE}
 
