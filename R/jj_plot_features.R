@@ -57,7 +57,7 @@
 
 jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, meta_features=NULL,
                              assay=NULL, slot='data', 
-                             colorScale=c('viridis', 'wbr', 'gbr', 'bry', 'seurat'),
+                             colorScale=c('viridis', 'wbr', 'gbr', 'bry', 'seurat', 'spectral'),
                              facet_by=NULL, cap_top=NULL,  cap_bottom=NULL, 
                              custom_colors=NULL, custom_theme=theme_minimal(), shape = 16, alpha=1,
                              pt.size=0.5, return_gg_object=FALSE, my_title=NULL,
@@ -362,6 +362,9 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
       mean_acc <- (max(dr_df[, goi[i]], na.rm = T) + min(dr_df[, goi[i]], na.rm = T)) / 2 #mean(dr_df[, goi[i]])
       print(mean_acc)
       gg <- gg + scale_color_gradient2(low = "grey80", mid = "blue", high = "red", midpoint = mean_acc)
+    }else if(colorScale=='spectral'){
+      gg <- gg + scale_color_gradientn(colours = c('#5E4FA2', '#3288BD', '#66C2A5', '#ABDDA4', '#E6F598', '#FFFFBF', 
+                                                   '#FEE08B', '#FDAE61', '#F46D43', '#D53E4F', '#9E0142'))
     }
     
     gg = gg + xlab(xlabel) + ylab(ylabel)
