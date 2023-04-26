@@ -6,6 +6,9 @@
 #' can be passed to `reduction` and seurat_obj can be set to NULL.
 #' Loads ggplot2 and dplyr libraries.
 #' 
+#' jj_plot_scatter is a wrapper function that calls jj_plot_features and allows 2D scatterplots with an optional linear regression line.
+#' jj_add_labels can be used to add custom labels to a ggplot
+#' 
 #' @param seurat_obj optional Seurat object
 #' @param reduction either a data.frame with embeddings in column 1+2 and further meta data or a string specifying a dimensionality reduction from the Seurat object
 #' @param features If Seurat object is provided, extract features from the specified assay and slot
@@ -19,7 +22,7 @@
 #' @param custom_theme custom theme to be used, default: theme_minimal()
 #' @param shape point shape, default: 16
 #' @param alpha alpha value, default: 1
-#' @param pt.size size of points, default: 0.1
+#' @param pt.size size of points, default: 'auto'
 #' @param return_gg_object return ggplot object instead of plotting, default: FALSE
 #' @param my_title optional title for the ggplot
 #' @param use_no_legend omit legend, default: FALSE
@@ -33,7 +36,7 @@
 #' @param do_order bool, order points so that largest values are on top
 #' @param do_shuffle bool, randomly shuffle the plotting order. Supersedes do_order.
 #' @param label_type one of geom_text, geom_text_repel, geom_label, geom_label_repel
-#' @param label_col colour to fill boxes, if do_label = T. If NULL, use colours from the respective groups
+#' @param label_col colour to fill boxes, if label_type is not NULL. If NULL, use colours from the custom_colors argument or grey if this is NULL as well
 #' @param xlabel x axis label, default: UMAP 1
 #' @param ylabel y axis label, default: UMAP 2
 #' @keywords plot
@@ -60,7 +63,7 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
                              colorScale=c('viridis', 'wbr', 'gbr', 'bry', 'seurat'),
                              facet_by=NULL, cap_top=NULL,  cap_bottom=NULL, 
                              custom_colors=NULL, custom_theme=theme_minimal(), shape = 16, alpha=1,
-                             pt.size=0.5, return_gg_object=FALSE, my_title=NULL,
+                             pt.size= 'auto', return_gg_object=FALSE, my_title=NULL,
                              use_no_legend=F, n_facet_rows=NULL, facet_subset=NULL, foreground_subset_bool = NULL,
                              cont_or_disc = 'a', use_pointdensity = FALSE,
                              #pointdensity_subset=NULL, 
@@ -112,6 +115,10 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
     stop('length of cont_or_disc must be either 1 or length(features, meta_features)')
   }else if(any(!cont_or_disc %in% c('c', 'd', 'a'))){
     stop('cont_or_disc can only be c, d, a: continuous, discrete, automatic')
+  }
+  
+  if(pt.size == 'auto'){
+    pt.size = ifelse(nrow(dr_df) > 20000, 0.5, ifelse(nrow(dr_df) > 10000, 1, ifelse(nrow(dr_df) > 1000, 1.5, 2)))
   }
   
   if(!is.null(meta_features)){
@@ -429,6 +436,42 @@ jj_plot_features <- function(seurat_obj=NULL, reduction=NULL, features=NULL, met
 }
 
 
+#' @export
+jj_plot_scatter = function(df, x, y, col=NULL, add_regression_line=T, ...){
+  stopifnot(all(c(x,y) %in% colnames(df)))
+  if(!is.null(col)){
+    stopifnot(col %in% colnames(df))
+  }else{
+    df$group = " "
+    col = 'group'
+  }
+  df = df[, c(x, y, col)]
+  colnames(df)[1:2] = c('x', 'y')
+  gg = jj_plot_features(reduction=df, meta_features = col, xlabel = x, ylabel = y, return_gg_object = T, ...)[[1]]
+  
+  #overwrite axes system and labeling
+  gg = gg + coord_cartesian() + 
+    scale_x_continuous(breaks = waiver()) + 
+    scale_y_continuous(breaks = waiver())
+  
+  if(add_regression_line){
+    # GET EQUATION AND R-SQUARED AS STRING
+    # SOURCE: https://groups.google.com/forum/#!topic/ggplot2/1TgH-kG5XMA
+    lm_eqn <- function(df){
+      m <- lm(y ~ x, df);
+      eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(r)^2~"="~r2, 
+                       list(a = format(unname(coef(m)[1]), digits = 2),
+                            b = format(unname(coef(m)[2]), digits = 2),
+                            r2 = format(summary(m)$r.squared, digits = 3)))
+      as.character(as.expression(eq));
+    }
+    gg <- gg + 
+      annotate('text',  x = -Inf, y = Inf, hjust = -0.5, vjust = 1, label = lm_eqn(df), parse = TRUE) + 
+      geom_smooth(method = "lm", se=T, color="black", formula = y ~ x)
+  }
+  gg
+}
+
 # #TODO replace repetitions of code with this helper function
 # cget_scale_midpoint = function(feat){
 #   (max(feat, na.rm = T) + min(feat, na.rm = T)) / 2 
@@ -444,35 +487,6 @@ jj_add_labels = function(gg, df, id, id_subset=NULL, facet_by = NULL, col_vec='g
   #col_vec either one colour for all text/boxes, or a named vector of colors for each single value in id
   #label type geom_text, geom_label, geom_text_repel or geom_label_repel
   #alpha alpha level for the boxes/text
-  get_centroids = function(df, id, id_subset=NULL, facet_by = NULL){
-    stopifnot(id %in% colnames(df))
-    stopifnot(facet_by %in% colnames(df))
-    get_medians = function(df){df %>% dplyr::group_by(group) %>% dplyr::summarise(dim1=median(dim1), dim2=median(dim2)) }
-    #id_subset: user defined subset of id values to highlight
-    if(!is.null(facet_by)){
-      df = as.data.frame(df[,c(colnames(df)[1:2], id, facet_by)])
-      colnames(df) = c('dim1','dim2','group', 'splitvar')
-      facet_list = list()
-      df_list = split(df, df$splitvar)
-      for(i in seq_along(df_list)){
-        df_list[[i]] = get_medians(df_list[[i]])
-        df_list[[i]][, facet_by] = names(df_list)[i]
-      }
-      centroid_df = do.call(rbind, df_list)
-    }else{
-      df = as.data.frame(df[,c(colnames(df)[1:2], id)])
-      colnames(df) = c('dim1','dim2','group')
-      centroid_df = get_medians(df)
-    }
-    
-    if(!is.null(id_subset)){
-      stopifnot(all(id_subset %in% centroid_df$group))
-      centroid_df = centroid_df[centroid_df$group %in% id_subset, ]
-    }
-    
-    centroid_df = dplyr::select(centroid_df, dim1, dim2, group, everything()) %>% as.data.frame
-    centroid_df
-  }
   label_type = match.arg(label_type, choices = c('geom_text', 'geom_text_repel', 'geom_label', 'geom_label_repel'))
   label_df = get_centroids(df, id = id, id_subset = id_subset, facet_by = facet_by)
   library(ggrepel)
@@ -506,4 +520,35 @@ jj_add_labels = function(gg, df, id, id_subset=NULL, facet_by = NULL, col_vec='g
     }
   }
   gg
+}
+
+
+get_centroids = function(df, id, id_subset=NULL, facet_by = NULL){
+  stopifnot(id %in% colnames(df))
+  stopifnot(facet_by %in% colnames(df))
+  get_medians = function(df){df %>% dplyr::group_by(group) %>% dplyr::summarise(dim1=median(dim1), dim2=median(dim2)) }
+  #id_subset: user defined subset of id values to highlight
+  if(!is.null(facet_by)){
+    df = as.data.frame(df[,c(colnames(df)[1:2], id, facet_by)])
+    colnames(df) = c('dim1','dim2','group', 'splitvar')
+    facet_list = list()
+    df_list = split(df, df$splitvar)
+    for(i in seq_along(df_list)){
+      df_list[[i]] = get_medians(df_list[[i]])
+      df_list[[i]][, facet_by] = names(df_list)[i]
+    }
+    centroid_df = do.call(rbind, df_list)
+  }else{
+    df = as.data.frame(df[,c(colnames(df)[1:2], id)])
+    colnames(df) = c('dim1','dim2','group')
+    centroid_df = get_medians(df)
+  }
+  
+  if(!is.null(id_subset)){
+    stopifnot(all(id_subset %in% centroid_df$group))
+    centroid_df = centroid_df[centroid_df$group %in% id_subset, ]
+  }
+  
+  centroid_df = dplyr::select(centroid_df, dim1, dim2, group, everything()) %>% as.data.frame
+  centroid_df
 }

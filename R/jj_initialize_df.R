@@ -14,13 +14,17 @@
 #' jj_initialize_df(ncol = 3, nrow = 4, init = 0, col.names = paste0("col", 1:3), row.names = paste0("row", 1:4))
 
 
-jj_initialize_df <- function(ncol, nrow, init=NA, col.names=NULL,return_matrix=FALSE, ...){
+jj_initialize_df <- function(ncol, nrow, init=NA, col.names=NULL,return_matrix=FALSE, sparse=FALSE, ...){
   init_df <- data.frame(matrix(init, ncol=ncol, nrow=nrow),stringsAsFactors = FALSE,...)
   if(!is.null(col.names) & length(col.names) == ncol){
     colnames(init_df) <- col.names
   }
   if(return_matrix){
     init_df = as.matrix(init_df)
+    if(sparse){
+      library(Matrix)
+      init_df = as(df, 'sparseMatrix')
+    }
   }
   return(init_df)
 }

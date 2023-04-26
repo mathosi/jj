@@ -10,6 +10,7 @@ jj_initialize_df(
   init = NA,
   col.names = NULL,
   return_matrix = FALSE,
+  sparse = FALSE,
   ...
 )
 }

@@ -19,7 +19,7 @@ jj_plot_features(
   custom_theme = theme_minimal(),
   shape = 16,
   alpha = 1,
-  pt.size = 0.5,
+  pt.size = "auto",
   return_gg_object = FALSE,
   my_title = NULL,
   use_no_legend = F,
@@ -68,7 +68,7 @@ jj_plot_features(
 
 \item{alpha}{alpha value, default: 1}
 
-\item{pt.size}{size of points, default: 0.1}
+\item{pt.size}{size of points, default: 'auto'}
 
 \item{return_gg_object}{return ggplot object instead of plotting, default: FALSE}
 
@@ -94,7 +94,7 @@ jj_plot_features(
 
 \item{label_type}{one of geom_text, geom_text_repel, geom_label, geom_label_repel}
 
-\item{label_col}{colour to fill boxes, if do_label = T. If NULL, use colours from the respective groups}
+\item{label_col}{colour to fill boxes, if label_type is not NULL. If NULL, use colours from the custom_colors argument or grey if this is NULL as well}
 
 \item{xlabel}{x axis label, default: UMAP 1}
 
@@ -106,6 +106,10 @@ Can plot scatterplots of multiple features provided under \code{features} (from 
 Embeddings from Seurat need to be specified under \code{reduction}. Alternatively, a data.frame with the embedding coordinates in the first two columns
 can be passed to \code{reduction} and seurat_obj can be set to NULL.
 Loads ggplot2 and dplyr libraries.
+}
+\details{
+jj_plot_scatter is a wrapper function that calls jj_plot_features and allows 2D scatterplots with an optional linear regression line.
+jj_add_labels can be used to add custom labels to a ggplot
 }
 \examples{
 df = data.frame(umap1=c(1,5,3), umap2=c(2,5,2), fruit=c('Apple', 'Banana', 'Apple'), dish=c('Salad','Salad','Snack'))

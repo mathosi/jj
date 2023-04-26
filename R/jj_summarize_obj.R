@@ -27,17 +27,28 @@ jj_summarize_sparse_mat <- function(summarize_obj, summarize_by_vec, method='mea
   if(!identical(ncol(summarize_obj), length(summarize_by_vec))){
     stop('Number of columns in the assay and length of group vector must be identical')
   }
-  method = match.arg(method, choices=c('mean', 'sum'))
-  #be careful: function 'mean' ignores . completely
-  ##summarize_obj <- Matrix.utils::aggregate.Matrix(summarize_obj, groupings = summarize_by_vec, fun = 'sum')
-  summarize_obj = Matrix::tcrossprod(Matrix::fac2sparse(summarize_by_vec), summarize_obj)
-  groups_in_vec <- rownames(summarize_obj)
-  #divide by n cells per group if mean should be returned
-  if(method=='mean'){
-    groups_freq <- table(summarize_by_vec)
-    summarize_obj <- summarize_obj /  as.vector(groups_freq)[match( groups_in_vec, names(groups_freq))]
+  method = match.arg(method, choices=c('mean', 'sum', 'sd'))
+  if(method == 'sd'){
+    sd_mat = as(jj_initialize_df(ncol = length(unique(summarize_by_vec)), nrow = nrow(summarize_obj), init = 0, return_matrix = T,
+                                 col.names = unique(summarize_by_vec), row.names= rownames(summarize_obj)), 'dgCMatrix')
+    for(i in unique(summarize_by_vec)){
+      sd_mat[, i] = proxyC::rowSds(summarize_obj[, summarize_by_vec == i]) #also considers all . (=0)
+    }
+    summarize_obj = sd_mat
+  }else{
+    #be careful: function 'mean' ignores . completely
+    ##summarize_obj <- Matrix.utils::aggregate.Matrix(summarize_obj, groupings = summarize_by_vec, fun = 'sum')
+    summarize_obj = Matrix::tcrossprod(Matrix::fac2sparse(summarize_by_vec), summarize_obj)
+    groups_in_vec <- rownames(summarize_obj)
+    #divide by n cells per group if mean should be returned
+    if(method=='mean'){
+      groups_freq <- table(summarize_by_vec)
+      summarize_obj <- summarize_obj /  as.vector(groups_freq)[match( groups_in_vec, names(groups_freq))]
+    }
+    summarize_obj <- Matrix::t(summarize_obj)
   }
-  summarize_obj <- Matrix::t(summarize_obj)
+  summarize_obj = summarize_obj[, gtools::mixedorder(colnames(summarize_obj))]
+  
   if(return_matrix){
     return(as.matrix(summarize_obj))
   }

@@ -24,11 +24,13 @@ jj_plot_dotplot(
   obj,
   features_use,
   group_vec,
-  group_annot_df = NULL,
   scale_data = FALSE,
-  column_colors = NULL,
   cluster_rows = TRUE,
-  cluster_columns = TRUE
+  cluster_columns = TRUE,
+  cap_top = NULL,
+  cap_bottom = NULL,
+  transpose = F,
+  max_size = 6
 )
 }
 \arguments{
@@ -46,7 +48,9 @@ jj_plot_dotplot(
 
 \item{transpose}{if TRUE, transpose the heatmap and show features as rows}
 
-\item{column_colors}{}
+\item{column_colors}{list with colour mapping for the column labels}
+
+\item{group_annot_df}{optional data.frame with group annotations to plot for the columns in jj_plot_dotplot}
 }
 \description{
 feature heatmap
