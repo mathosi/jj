@@ -11,7 +11,7 @@
 #' @param group_vec Vector of strings with the grouping information
 #' @param type Type of plot, options are 'violin' or 'boxplot'
 #' @param plot_mean Plot the mean value per group as horizontal line
-#' @param plot_group_size Plot number of cells per group 
+#' @param plot_group_size Plot number of cells per group, in jj_plot_numeric_by_group replaced by show_annotation with choices c('n','mean','sd')
 #' @param plot_zero_fraction for sparse data, plot the fraction of zero counts per group as pie
 #' @param plot_cell_sample if TRUE, plot a sample of cells for each group (equal number)
 #' @param order if TRUE, order the groups  by their mean value
@@ -28,12 +28,12 @@
 #' @examples
 #' #plot as boxplot with additional mean, number of cells per group and cell sample (requires ggbeeswarm)
 #' jj_plot_numeric_by_group(pbmc_small@meta.data, feature_column = 'nFeature_RNA', group_column = 'groups',
-#'                          plot_mean = T, plot_cell_sample = T,
-#'                          plot_group_size = T, type = 'boxplot')
+#'                          plot_mean = T, plot_cell_sample = T, type = 'boxplot')
 #' #plot as violin with custom colours
 #' jj_plot_numeric_by_group(pbmc_small@meta.data, feature_column = 'nFeature_RNA', group_column = 'groups',
-#'                          custom_colors = c(g1='green', g2='blue'),
-#'                          plot_group_size = T, type = 'violin')
+#'                          custom_colors = c(g1='green', g2='blue'), type = 'violin')
+#' jj_plot_numeric_by_group(pbmc_small@meta.data, feature_column = 'nFeature_RNA', group_column = 'groups',
+#'                          show_annotation = c('n', 'mean', 'sd'), annotation_at = 100, type = 'violin')
 #' #plot a sparse feature directly from Seurat
 #' jj_plot_sparse_by_group_seurat(pbmc_small, 'CD79A', 'groups', assay='RNA', slot='data')
 #' #or from a sparse matrix
@@ -170,20 +170,23 @@ jj_plot_sparse_by_group = function(rna_mat, gene_plot, group_vec, x_lab='Group',
 #' @rdname plot_feature_by_group
 #' @export
 jj_plot_numeric_by_group = function(df, feature_column, group_column, custom_colors=NULL,
-                                 plot_cell_sample=FALSE, plot_mean = TRUE, plot_group_size = FALSE,
+                                 plot_cell_sample=FALSE, plot_mean = TRUE, show_annotation = NULL, annotation_at = NULL,
                                  theme_use = theme_minimal(), type='violin', order=FALSE, flip_coordinates=FALSE, ...){
-  #jj_plot_numeric_by_group(seurat_rna@meta.data, 'dissimilarity.score', 'patient', plot_group_size = T, flip_coordinates=T)
+  #jj_plot_numeric_by_group(seurat_rna@meta.data, 'dissimilarity.score', 'patient',  flip_coordinates=T)
   type = match.arg(type, choices = c('violin', 'boxplot'))
+  if(!is.null(show_annotation)){
+    show_annotation = match.arg(show_annotation, choices = c('n', 'mean', 'sd'), several.ok = TRUE)
+  }  
   data_df = as.data.frame(df)[, c(group_column, feature_column)]
   
   #mean expression per group
   mean_df =  data_df %>%
     dplyr::group_by(!!rlang::sym(group_column)) %>% 
-    dplyr::summarise(count=mean(!!rlang::sym(feature_column)), n=n()) %>% 
+    dplyr::summarise(mean=mean(!!rlang::sym(feature_column)), sd= sd(!!rlang::sym(feature_column)), n=n()) %>% 
     as.data.frame 
   
   if(order){
-    order_use = order(mean_df$count, decreasing = T)
+    order_use = order(mean_df$mean, decreasing = T)
     data_df[, group_column] = factor(data_df[, group_column], levels = mean_df[, group_column][order_use])
     mean_df = mean_df[order_use, ]
   }
@@ -209,13 +212,18 @@ jj_plot_numeric_by_group = function(df, feature_column, group_column, custom_col
   }
   
   if(plot_mean){
-    gg = gg + geom_segment(data=mean_df, aes(x = row_nr-0.25, y = count, xend = row_nr+0.25, yend = count, colour = "Mean")) + 
+    gg = gg + geom_segment(data=mean_df, aes(x = row_nr-0.25, y = mean, xend = row_nr+0.25, yend = mean, colour = "Mean")) + 
       scale_color_manual(values=(Mean='brown4'))
   }
   
-  if(plot_group_size){
+  if(!is.null(show_annotation)){
+    if(is.null(annotation_at)) annotation_at = -0.25
+    annot_df = mean_df[, c(group_column, show_annotation)]
+    annot_df$label = sapply(1:nrow(annot_df), function(x) paste(round(annot_df[x, show_annotation], 2), collapse='\n'))
+    #annot_df[nrow(annot_df)+1, ] = c(0.5, rep(0, length(show_annotation)), paste(show_annotation, collapse='\n'))
+    annot_df$label[1] = paste(paste(show_annotation, round(annot_df[1, show_annotation], 2), sep=' = '), collapse = '\n')
     gg = gg + 
-      geom_text(data = mean_df, mapping = aes(x = row_nr, y = -0.25, label = n ))
+      geom_text(data = annot_df, mapping = aes_string(x = group_column, y = annotation_at, label = 'label'), colour = 'brown4')
   }
   
   if(flip_coordinates){

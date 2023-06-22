@@ -5,56 +5,55 @@
 \title{plot features}
 \usage{
 jj_plot_features(
-  seurat_obj = NULL,
-  reduction = NULL,
+  obj,
   features = NULL,
-  meta_features = NULL,
-  assay = NULL,
+  reduction = NULL,
+  assay_order = c("meta.data|cellColData", "DefaultAssay", "RNA", "GeneScoreMatrix",
+    "PeakMatrix"),
   slot = "data",
-  colorScale = c("viridis", "wbr", "gbr", "bry", "seurat"),
+  color_scale = c("viridis", "wbr", "gbr", "bry", "seurat", "spectral")[1],
   facet_by = NULL,
+  area_by = NULL,
+  area_thres = 0.98,
+  n_facet_rows = NULL,
+  facet_subset = NULL,
   cap_top = NULL,
   cap_bottom = NULL,
   custom_colors = NULL,
   custom_theme = theme_minimal(),
-  shape = 16,
-  alpha = 1,
-  pt.size = "auto",
+  pt_size = "a",
   return_gg_object = FALSE,
-  my_title = NULL,
-  use_no_legend = F,
-  n_facet_rows = NULL,
-  facet_subset = NULL,
+  use_pointdensity = FALSE,
+  show_background_cells = FALSE,
   foreground_subset_bool = NULL,
   cont_or_disc = "a",
-  use_pointdensity = FALSE,
-  do_order = FALSE,
-  do_shuffle = FALSE,
-  show_background_cells = FALSE,
+  order_type = c("shuffle", "order", "none")[1],
+  convert_factors = FALSE,
+  my_title = NULL,
   label_type = NULL,
   label_subset = NULL,
-  label_col = NULL,
-  convert_factors = FALSE,
+  fill_colors = NULL,
+  use_no_legend = FALSE,
   xlabel = "UMAP 1",
-  ylabel = "UMAP 2"
+  ylabel = "UMAP 2",
+  shape = 16,
+  alpha = 1
 )
 }
 \arguments{
-\item{seurat_obj}{optional Seurat object}
+\item{features}{If Seurat object is provided, extract features from the specified assay and slot}
 
 \item{reduction}{either a data.frame with embeddings in column 1+2 and further meta data or a string specifying a dimensionality reduction from the Seurat object}
 
-\item{features}{If Seurat object is provided, extract features from the specified assay and slot}
-
-\item{meta_features}{if Seurat object is provided, extract features from the meta.data. Otherwise extract features from the data.frame provided in \code{reduction}}
-
-\item{assay}{assay to use from the Seurat object, default: DefaultAssay(seurat_obj)}
-
 \item{slot}{slot to use from the Seurat object, default: data}
 
-\item{colorScale}{color scale to use for continuous features, one of 'wbr', 'bry', 'seurat', 'viridis'}
+\item{color_scale}{color scale to use for continuous features, one of 'wbr', 'bry', 'seurat', 'viridis'}
 
 \item{facet_by}{string specifying a meta_feature to facet by}
+
+\item{n_facet_rows}{number of rows for facetted plots}
+
+\item{facet_subset}{Only used when facet_by not NULL Only plot the facets for the groups supplied here. Background cells are still shown for the whole dataset}
 
 \item{cap_top}{upper value threshold passed to jj_cap_vals}
 
@@ -64,41 +63,43 @@ jj_plot_features(
 
 \item{custom_theme}{custom theme to be used, default: theme_minimal()}
 
-\item{shape}{point shape, default: 16}
-
-\item{alpha}{alpha value, default: 1}
-
-\item{pt.size}{size of points, default: 'auto'}
+\item{pt_size}{size of points, default: 'auto'}
 
 \item{return_gg_object}{return ggplot object instead of plotting, default: FALSE}
 
-\item{my_title}{optional title for the ggplot}
+\item{use_pointdensity}{colour by pointdensity using the ggpointdensity package.}
 
-\item{use_no_legend}{omit legend, default: FALSE}
-
-\item{n_facet_rows}{number of rows for facetted plots}
-
-\item{facet_subset}{Only used when facet_by not NULL Only plot the facets for the groups supplied here. Background cells are still shown for the whole dataset}
+\item{show_background_cells}{bool, works if foreground_subset_bool is specified. Also when using facets, include the cells not part of the facet as grey background}
 
 \item{foreground_subset_bool}{boolean vector with same length as number of cells. If show_background_cells=TRUE, show all cells with FALSE as grey background. Do also exlcude those cells for pointdensity calculation, if use_pointdensity=TRUE. Currently not working with do_label=T}
 
 \item{cont_or_disc}{string of length 1 or length n features indicating whether the features are continuous 'c' or discrete 'd'. Try to set this manually, when the function fails. Otherwise, set to 'a' to automatically determine c or d for each feature.}
 
-\item{use_pointdensity}{colour by pointdensity using the ggpointdensity package.}
-
-\item{do_order}{bool, order points so that largest values are on top}
-
-\item{do_shuffle}{bool, randomly shuffle the plotting order. Supersedes do_order.}
-
-\item{show_background_cells}{bool, works if foreground_subset_bool is specified. Also when using facets, include the cells not part of the facet as grey background}
+\item{my_title}{optional title for the ggplot}
 
 \item{label_type}{one of geom_text, geom_text_repel, geom_label, geom_label_repel}
 
-\item{label_col}{colour to fill boxes, if label_type is not NULL. If NULL, use colours from the custom_colors argument or grey if this is NULL as well}
+\item{fill_colors}{colour to fill boxes or areas, if label_type or area_by is not NULL. If NULL, use colours from the custom_colors argument or grey if this is NULL as well}
+
+\item{use_no_legend}{omit legend, default: FALSE}
 
 \item{xlabel}{x axis label, default: UMAP 1}
 
 \item{ylabel}{y axis label, default: UMAP 2}
+
+\item{shape}{point shape, default: 16}
+
+\item{alpha}{alpha value, default: 1}
+
+\item{seurat_obj}{optional Seurat object}
+
+\item{meta_features}{if Seurat object is provided, extract features from the meta.data. Otherwise extract features from the data.frame provided in \code{reduction}}
+
+\item{assay}{assay to use from the Seurat object, default: DefaultAssay(seurat_obj)}
+
+\item{do_order}{bool, order points so that largest values are on top}
+
+\item{do_shuffle}{bool with default = TRUE, randomly shuffle the plotting order. Supersedes do_order.}
 }
 \description{
 Extension of the functionalities provided by Seurats FeaturePlot/DimPlot functions
@@ -112,20 +113,24 @@ jj_plot_scatter is a wrapper function that calls jj_plot_features and allows 2D 
 jj_add_labels can be used to add custom labels to a ggplot
 }
 \examples{
-df = data.frame(umap1=c(1,5,3), umap2=c(2,5,2), fruit=c('Apple', 'Banana', 'Apple'), dish=c('Salad','Salad','Snack'))
-jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, shape=15, my_title='fruits')
-jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, facet_by='fruit', n_facet_rows=2)
-jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, facet_by='dish')
-jj_plot_features(reduction=df, meta_features=c('fruit'), pt.size=4, custom_colors=c(Apple='green', Banana='yellow'))
-jj_plot_features(pbmc_small, reduction='tsne', features=c('MS4A1', 'CD79A'), cap_top='q95', colorScale='viridis', pt.size = 2, xlabel='tsne_1', ylabel='tsne_2',my_title=c('tnse: MS4A1','tsne: CD79A'))
-df2 = data.frame(a=rnorm(100, 0, 5), b=rnorm(100, 0, 5), d=rbinom(100, 50, 0.3), e = sample(c('A','B', 'C'), 100, replace=T))
-jj_plot_features(reduction=df2, meta_features=c('d'), pt.size=4, facet_by = 'e', show_background_cells = T, do_order=T, custom_theme = theme_bw())
-jj_plot_features(reduction=df2, meta_features='e', pt.size=4, facet_by = 'e', use_pointdensity = T, do_order=T, custom_theme = theme_bw())
-jj_plot_features(reduction=df2, meta_features='e', pt.size=4, use_pointdensity = T, foreground_subset_bool = df2$e \%in\% c('B','C'),show_background_cells=T, do_order=T, custom_theme = theme_bw())
-jj_plot_features(reduction=df2, meta_features='e', pt.size=4, use_pointdensity = T, foreground_subset_bool = df2$e \%in\% c('B','C'), show_background_cells=T, facet_by = 'e', facet_subset = c('A','B'), custom_theme = theme_bw())
-data_df = data.frame(x=c(rnorm(200, 5), rnorm(70,2), rnorm(50,2.5, 2)), y=c(rnorm(200, 5), rnorm(70,-2), rnorm(50,2.5,2)), clusterIdent = c(rep('gr1', 200), rep('gr2', 70), rep('gr3', 50)), groupVar = c(rep('AA', 180), rep('BB', 140)))
-mycols = structure(c('red','green', 'pink'), names = c('gr1','gr2','gr3'))
-jj_plot_features(reduction = data_df, meta_features = 'clusterIdent', return_gg_object = T, pt.size = 2,
-                 facet_by = 'groupVar', label_type = 'geom_label_repel', label_subset = c('gr1','gr2'), custom_colors=mycols)[[1]]
+set.seed(1)
+df = df = data.frame(x=c(rnorm(380, 5), rnorm(70,2), rnorm(50, 2.5, 2)), y=c(rnorm(380, 5), rnorm(70,-2), rnorm(50,2.5,2)), mock_gene = sample(0:10, size = 500, replace = T, prob = 11:1), clusterIdent = c(rep('gr1', 380), rep('gr2', 70), rep('gr3', 50)), batch = c(rep('A', 380), rep('B', 120)))
+jj_plot_features(obj=df, features=c('mock_gene', 'clusterIdent'))
+jj_plot_features(obj=df, facet_by = 'batch', use_pointdensity = T, pt_size=4, custom_theme = theme_bw())
+jj_plot_features(obj=df, facet_by = 'batch', use_pointdensity = T, foreground_subset_bool = df$clusterIdent \%in\% c('gr1','gr2'), show_background_cells=T, pt_size=4, custom_theme = theme_bw())
+jj_plot_features(obj=df, features = 'batch', facet_by = 'clusterIdent', show_background_cells=T, pt_size=4)
+jj_plot_features(obj=df, features = 'batch', facet_by = 'clusterIdent', facet_subset = c('gr1', 'gr3'), pt_size=4)
+jj_plot_features(obj = df, features = 'clusterIdent', facet_by = 'batch', label_type = 'geom_label_repel', label_subset = c('gr1','gr2'), custom_colors=structure(c('red','green', 'darkblue'), names = c('gr1','gr2','gr3')))
+jj_plot_features(obj = df, features = 'clusterIdent', label_type = 'geom_label_repel', fill_colors = 'white', return_gg_object = T)[[1]] + labs(colour='new\ncolourtitle')
+jj_plot_features(obj = df, features = 'clusterIdent', area_by = 'batch', custom_colors = c(gr1='red', gr2='green', gr3='darkblue'))
+#only colour specific subsets
+jj_plot_features(obj = df, features = 'clusterIdent', area_by = 'batch', custom_colors = c(gr1='red', gr2='green'), fill_colors = c(A = 'yellow'))
+#if both area_by and label_type are specified, fill_colors will overwrite the label colours and set them to grey
+jj_plot_features(obj = df, features = 'clusterIdent', area_by = 'batch', label_type = 'geom_label', custom_colors = c(gr3='purple'), fill_colors = c(gr1 = 'yellow', A='orange'))
+
+jj_plot_features(obj= pbmc_small, reduction ='tsne', features=c('MS4A1', 'CD79A'), cap_top='q95', color_scale='wbr', xlabel='tsne_1', ylabel='tsne_2',my_title=c('tnse: MS4A1','tsne: CD79A'))
+jj_arrange_ggplots(jj_plot_features(obj= pbmc_small, reduction ='tsne', features=c('MS4A1', 'CD79A', 'CD8A'), cap_top='auto', return_gg_object = TRUE))
+jj_plot_features(pbmc_small, reduction ='tsne', features= 'nCount_RNA', cap_top='q95', foreground_subset_bool = pbmc_small$groups == 'g1', show_background_cells = T)
+jj_plot_features(pbmc_small, features= 'nCount_RNA', cap_top='q95', area_by = 'letter.idents', area_thres = 0.9)
 }
 \keyword{plot}

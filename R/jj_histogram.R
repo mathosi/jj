@@ -1,68 +1,44 @@
-#' summarise values as mean, mode, or sum by a group vector 
+#' plot histogram of data
 #'
-#' plot histogram of data excluding 0 (useful for showing gene expression in sparse single cell data)
-#' use `thres` to define threshold for counting number of cells above and below this mark
+#' plot histogram of data
 #'
-#' @name summarise_vals
-#' @param feature_vec vector with values to plot
-#' @param thres optional value threshold, for which the number of observations are counted above and below
-#' @param title optional title
-#' @param xlab xlab text
-#' @param cols colours for bars above and below threshold
-#' @param plot_numbers NULL (do not plot numbers) or vector containing any combination of 1 (observations above threshold), 2 (observations below threshold) and 3 (observations below threshold that are not 0)
-#' @param pad padding for the numbers if plot_numbers is not NULL
+#' @name plot_hist
+#' @param feature vector with values to plot
+#' @param fill optional value threshold, for which the number of observations are counted above and below
+#' @param colour optional title
+#' @param group xlab text
+#' @param title colours for bars above and below threshold
+#' @param nbins NULL (do not plot numbers) or vector containing any combination of 1 (observations above threshold), 2 (observations below threshold) and 3 (observations below threshold that are not 0)
+#' @param size border size for the histogram stacks
 #' @export
 #' @examples
-#' cd8a_count = rnbinom(1e6, size = 1, prob = 0.7)
-#' cell_nCount_RNA = rnbinom(1e6, size = 1000, prob=0.7)
-#' cd8a_norm_count = cd8a_count / cell_nCount_RNA
-#' jj_plot_hist_wo0(feature_vec = cd8a_norm_count, title = 'CD8A counts', thres = 0.015)
-#' jj_plot_hist_wo0(feature_vec = cd8a_norm_count, title = 'CD8A counts', thres = 0.015, 
-#'                 plot_numbers = c(3,2), cols = c('grey', 'black')) +
-#'   theme(legend.position = 'none')
+#' df = data.frame(letters = sample(letters[1:4], 100, replace = T),
+#'                 groups = paste0('G_', sample(1:2, 100, replace = T)),
+#'                 treatment = factor(sample(c('no','yes'), 100, replace = T, prob = c(0.9,0.1)), levels=c('no','yes')),
+#'                 values = rnorm(100, 4, 2))
+#' jj_plot_hist(df$values)
+#' jj_plot_hist(df, feature = 'values', group = 'groups')
+#' jj_plot_hist(df, feature = 'values', group = 'groups', fill = 'letters', nbins = 30)
+#' jj_plot_hist(df, feature = 'values', colour='treatment', fill = 'letters', title='my title', group = 'groups', size = 1.3, binwidth = 0.1) + 
+#'   scale_fill_manual(values = jj_get_jj_colours(df$letters)) + scale_colour_manual(values = c(yes='black', no = "white"))
 
-jj_plot_hist_wo0 = function(feature_vec, thres=NULL, title = '', xlab='value', 
-                            cols = c('red', 'lightblue'), plot_numbers=1:3, pad = 20){
-  if(!all(feature_vec >=0)){
-    stop('Histogram currently only implemented for counts >= 0.')
+#' @export
+jj_plot_hist = function(data, feature = NULL, fill = NULL, colour= NULL, group = NULL,
+                        title = '',  nbins = 50, size = 1, ...){
+  #helper function to plot histograms providing either a data.frame as `data` or a vector of values
+  if(is.vector(data)){
+    data = data.frame(feature=data)
+    feature = 'feature'
   }
-  if(!is.null(plot_numbers[1])){
-    stopifnot(all(plot_numbers %in% 1:3))
-  }
-  names(cols) = c('FALSE','TRUE')
-  goi_df = data.frame(feature=feature_vec)
-  if(is.numeric(thres)){
-    goi_df[, 'above_threshold'] = goi_df[, 'feature'] > thres
-    goi_gr_thres = sum(goi_df[, 'feature'] > thres)
-    goi_smeq_thres = sum(goi_df[, 'feature'] <= thres)
-    goi_smeq_thres_not_0 = sum(goi_df[, 'feature'] <= thres & goi_df[, 'feature'] != 0)
-    
-    strings_vec = vector()
-    sprintf_vec = paste0('%-', as.character(pad), 's%d')
-    strings_vec[1] = sprintf(sprintf_vec, paste0('>  ', as.character(thres),': '), goi_gr_thres)
-    strings_vec[2] = sprintf(sprintf_vec, paste0('<= ', as.character(thres),': ') , goi_smeq_thres)
-    strings_vec[3] = sprintf(sprintf_vec, paste0('<= ', as.character(thres), ' & > 0: '), goi_smeq_thres_not_0)
-    if(is.null(plot_numbers[1])){
-      string_plot = '\n\n'
-    }else{
-      string_plot = paste0(paste0(strings_vec[plot_numbers], collapse='\n'), paste0(rep('\n', 3-length(plot_numbers)), collapse = ''), collapse = '')
-    }
-    gg = ggplot(goi_df, aes_string(x='feature', fill= 'above_threshold')) +
-      geom_histogram(bins = 300) + 
-      scale_x_continuous(limits = c(0.01,NA)) + 
-      labs(title = title, subtitle = string_plot, 
-           x=xlab, y = 'n') +
-      theme_minimal() + 
-      theme(text=element_text(family = 'mono'))  + 
-      scale_fill_manual(values = cols)
-  }else{
-    gg = ggplot(goi_df, aes_string(x='feature')) +
-      geom_histogram(bins = 300) + 
-      scale_x_continuous(limits = c(0.01,NA)) + 
-      labs(title = title, x=xlab, y = 'n', subtitle = '\n\n') + 
-      theme_minimal() + 
-      theme(text=element_text(family = 'mono'))
+  
+  gg = ggplot(data, aes_string(x=feature, fill= fill, colour=colour)) +
+    geom_histogram(bins = nbins, size = size, ... ) + 
+    labs(title = title) + 
+    theme_minimal() + 
+    theme(plot.title = element_text(hjust = 0.5))
+  
+  if(!is.null(group)){
+    gg = gg + facet_wrap(as.formula(paste("~", group)))
   }
   gg
 }
-

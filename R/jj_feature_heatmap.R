@@ -33,7 +33,7 @@ jj_plot_heatmap = function(obj, features_use, group_vec, scale_data=TRUE, show_t
   if('Seurat' %in% class(obj)){
     heatmap_mat = Matrix::t(jj_bind_features_with_dr_df(obj, slot='data', features=features_use))
   }else{
-    message('Class of obj is not seurat, assuming it is a matrix of normalized counts (features in rows, cells in columns)')
+    message('Class of obj is not Seurat, assuming it is a matrix of normalized counts (features in rows, cells in columns)')
     heatmap_mat = obj[rownames(obj) %in% features_use, ]
     stopifnot(nrow(heatmap_mat)>1 & ncol(heatmap_mat) > 1)
     heatmap_mat = heatmap_mat[match(features_use, rownames(heatmap_mat)), ]
@@ -149,6 +149,12 @@ jj_plot_dotplot = function(obj, features_use, group_vec, scale_data = FALSE,
     return(expr_mat)
   }
   
+  if('Seurat' %in% class(obj)){
+    message('Class of obj is Seurat, using the DefaultAssay: ', DefaultAssay(obj))
+    obj = GetAssayData(obj)
+  }else{
+    message('Class of obj is not Seurat, assuming it is a matrix of normalized counts (features in rows, cells in columns)')
+  }
   
   stopifnot((is(obj, "Matrix") | class(obj) == "matrix"))
   stopifnot(identical(ncol(obj), length(group_vec)))

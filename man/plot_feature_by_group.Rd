@@ -42,7 +42,8 @@ jj_plot_numeric_by_group(
   custom_colors = NULL,
   plot_cell_sample = FALSE,
   plot_mean = TRUE,
-  plot_group_size = FALSE,
+  show_annotation = NULL,
+  annotation_at = NULL,
   theme_use = theme_minimal(),
   type = "violin",
   order = FALSE,
@@ -85,7 +86,7 @@ jj_plot_categorical_by_group(
 
 \item{plot_mean}{Plot the mean value per group as horizontal line}
 
-\item{plot_group_size}{Plot number of cells per group}
+\item{plot_group_size}{Plot number of cells per group, in jj_plot_numeric_by_group replaced by show_annotation with choices c('n','mean','sd')}
 
 \item{type}{Type of plot, options are 'violin' or 'boxplot'}
 
@@ -113,12 +114,12 @@ Plot a gene/numeric/categorical feature by group as violin or boxplot
 \examples{
 #plot as boxplot with additional mean, number of cells per group and cell sample (requires ggbeeswarm)
 jj_plot_numeric_by_group(pbmc_small@meta.data, feature_column = 'nFeature_RNA', group_column = 'groups',
-                         plot_mean = T, plot_cell_sample = T,
-                         plot_group_size = T, type = 'boxplot')
+                         plot_mean = T, plot_cell_sample = T, type = 'boxplot')
 #plot as violin with custom colours
 jj_plot_numeric_by_group(pbmc_small@meta.data, feature_column = 'nFeature_RNA', group_column = 'groups',
-                         custom_colors = c(g1='green', g2='blue'),
-                         plot_group_size = T, type = 'violin')
+                         custom_colors = c(g1='green', g2='blue'), type = 'violin')
+jj_plot_numeric_by_group(pbmc_small@meta.data, feature_column = 'nFeature_RNA', group_column = 'groups',
+                         show_annotation = c('n', 'mean', 'sd'), annotation_at = 100, type = 'violin')
 #plot a sparse feature directly from Seurat
 jj_plot_sparse_by_group_seurat(pbmc_small, 'CD79A', 'groups', assay='RNA', slot='data')
 #or from a sparse matrix

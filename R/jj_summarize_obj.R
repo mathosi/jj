@@ -108,15 +108,19 @@ jj_summarize_dataframe = function(summarize_obj, summarize_by_vec, method = 'mea
                          nrow = length(unique(summarize_by_vec)),
                          init = NA, 
                          col.names = colnames(summarize_df),
-                         row.names = sort(unique(summarize_by_vec)))
+                         row.names =  dplyr::pull(dplyr::arrange(data.frame(b= unique(summarize_by_vec)), b), b)) 
   
   for(i in 1:ncol(summarize_df)){
     if(class(summarize_df[, i]) %in% c('numeric','integer')){
       message(sprintf('%i/%i: Summarize %s by %s', i, ncol(summarize_df), colnames(summarize_df[i]), method))
-      sdf[, i]  = jj_summarize_vector(summarize_df[, i], summarize_by_vec, method=method, order = T, return_vec = T)
+      svec = jj_summarize_vector(summarize_df[, i], summarize_by_vec, method=method, order = T, return_vec = T)
+      stopifnot(identical(names(svec), rownames(sdf)))
+      sdf[, i]  = svec
     }else{
       message(sprintf('%i/%i: Summarize %s by mode', i, ncol(summarize_df), colnames(summarize_df[i])))
-      sdf[, i] = jj_summarize_vector(summarize_df[, i], summarize_by_vec, method='mode', order = T, return_vec = T)
+      svec = jj_summarize_vector(summarize_df[, i], summarize_by_vec, method='mode', order = T, return_vec = T)
+      stopifnot(identical(names(svec), rownames(sdf)))
+      sdf[, i] = svec
     }
   }
   return(sdf)

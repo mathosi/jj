@@ -36,16 +36,18 @@ getLevel2 <- function(x,y,prob){
 #get the coordinates of the contours containing cont_thres fraction of cells
 getContourLines <- function(reduction_df, grouping_var, cont_thres){
   ls <- list()
+  x_range = range(reduction_df[, 1])
+  y_range = range(reduction_df[, 2])
   for(pop in unique(reduction_df[,grouping_var])){
     reduction_group_df <- reduction_df[reduction_df[, grouping_var] == pop, ]
     cont_level <- getLevel2(reduction_group_df[, 1],
                             reduction_group_df[, 2],
                             cont_thres)
-    
+    exprop = 1 #how much should the plotting grid be extended to include the full area shape
     dens <- MASS::kde2d(reduction_group_df[, 1],
                         reduction_group_df[, 2],
                         n=300, #more lines, more accurate, but longer run time
-                        lims=c(c(-12, 12), c(-12, 12)))  # don't clip the contour
+                        lims=c(c(x_range[1] - abs(exprop*x_range[1]), x_range[2]+ abs(exprop*x_range[2])), c(y_range[1]- abs(exprop*y_range[1]), y_range[2]+ abs(exprop*y_range[2]))))  # don't clip the contour
     
     ls[[as.character(pop)]] <- contourLines(dens, levels=cont_level)
   }
@@ -64,7 +66,7 @@ getContourCoordinates <- function(ls){
     cont_df_list[[i]] <- data.frame(x=x1, y=y1, cont_name, grouping_var = names(ls)[i])
   }
   cont_df <- do.call(rbind, cont_df_list)
-  cont_df <- cont_df %>% unite('cont_group', c('grouping_var', 'cont_name'), remove = F)
+  cont_df <- cont_df %>% tidyr::unite('cont_group', c('grouping_var', 'cont_name'), remove = F)
   return(cont_df)
 }
  
