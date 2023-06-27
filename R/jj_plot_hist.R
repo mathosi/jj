@@ -27,7 +27,6 @@
 #' jj_plot_hist(df, feature = 'values', thres = 4)
 #' jj_plot_hist(df, feature = 'values', thres = 4, exclude_zeros = T, include_summary = c('<', '>='))
 
-#' @export
 jj_plot_hist = function(data, feature = NULL, fill = NULL, thres = NULL, colour= NULL, group = NULL,
                         title = '',  nbins = 50, size = 1, exclude_zeros = FALSE, include_summary = c('n','>=', '<', '>0<'), ...){
   #helper function to plot histograms providing either a data.frame as `data` or a vector of values
@@ -46,12 +45,12 @@ jj_plot_hist = function(data, feature = NULL, fill = NULL, thres = NULL, colour=
     if(!is.null(include_summary[1])){
       goi_gr_thres = sum(data[, feature] >= thres)
       goi_sm_thres = sum(data[, feature] < thres)
-      goi_sm_thres_not_0 = sum(data[, feature] < thres & data[, feature] != 0)
+      goi_sm_thres_not_0 = sum(data[, feature] < thres & data[, feature] > 0)
       strings_vec = vector()
       strings_vec['n'] = paste0(nrow(data), ' ( n )')
       strings_vec['>='] = paste0(goi_gr_thres, ' ( n >= ', as.character(thres), ' )')
       strings_vec['<'] = paste0(goi_sm_thres, ' ( n < ', as.character(thres), ' )')
-      strings_vec['>0<'] = paste0(goi_sm_thres_not_0, ' ( n > 0 & < ', as.character(thres), ' )') 
+      strings_vec['>0<'] = sprintf('%i ( %s > n > 0 )', goi_sm_thres_not_0, as.character(thres)) 
       string_plot = paste0(paste0(strings_vec[include_summary], collapse='\n'), paste0(rep('\n', length(strings_vec) - length(include_summary)), collapse = ''), collapse = '')
     }
   }

@@ -10,3 +10,6 @@ The most important functions are:
 - `jj_plot_numeric_by_group`: Plot a numeric feature summarized by group as violins or boxplots
 - `jj_plot_categorical_by_group`: Plot a categorical feature summarized by group as violins or boxplots
 - `jj_plot_heatmap` / `jj_plot_dotplot` : Plot a heatmap/dotplot for a selection of genes by group
+- `jj_plot_hist` : Plot a histogram and optionally count values above and below a threshold
+- `jj_plot_volcano` : Plot a volcano plot given a data.frame with fold change and p-value column
+- `jj_plot_fc_fc` : Plot two fold change columns against each other to compare differential analysis results
