@@ -10,7 +10,7 @@ jj_plot_volcano(
   pval_column,
   symbol_column = NULL,
   marker_thres = c(0.5, Inf),
-  labs_range = c(-1, 1),
+  labs_range = NULL,
   alpha = 1,
   pt.size = 2.5,
   highlight.pt.size = 2.5,

@@ -58,7 +58,7 @@
 
 #' @export 
 jj_plot_volcano = function(plot_df, logfc_column, pval_column, symbol_column=NULL, 
-                           marker_thres = c(0.5,Inf), labs_range = c(-1, 1), alpha = 1,                          
+                           marker_thres = c(0.5,Inf), labs_range = NULL, alpha = 1,                          
                            pt.size=2.5, highlight.pt.size = 2.5, 
                            col_vec = c("red", "blue", "black","green"),
                            markers_highlight = NULL, markers_highlight_col=NULL, only_highlight=FALSE, 
@@ -71,9 +71,22 @@ jj_plot_volcano = function(plot_df, logfc_column, pval_column, symbol_column=NUL
   if(!is.null(group_names)){
     stopifnot(length(group_names) == 2)
   }
-  stopifnot(length(labs_range) == 2)
-  stopifnot(all(is.numeric(labs_range)))
+  
   plot_df = plot_df[, colnames(plot_df) %in% c(logfc_column, pval_column, symbol_column)]
+  plot_df[, pval_column] = -log10(plot_df[, pval_column])
+  
+  if(!is.null(labs_range)){
+    if(length(labs_range) == 2){
+      stopifnot(all(is.numeric(labs_range)))
+      labs_range = c(labs_range, 0, max(plot_df[, pval_column]))
+    }else if(length(labs_range) == 4){
+      stopifnot(all(is.numeric(labs_range)))
+    }else{
+      stop("labs_range should be of length 2 (defining x axis) or 4 (definining x and y axes) or NULL (no limits)")
+    }
+  }
+  
+
   symbols_use = c('outside plotting area', 'inside plotting area')
   if(is.null(marker_thres)){
     marker_thres = c(Inf, Inf)
@@ -82,22 +95,24 @@ jj_plot_volcano = function(plot_df, logfc_column, pval_column, symbol_column=NUL
   }else if(length(marker_thres) > 2){
     stop('marker_thres should specifiy thresholds on log2FC and adjusted p value (length 2)')
   }
-  
   if(!is.null(labs_range)){
-    #add a column that is used for different symbols (circle if inside plot, triangle if outside)
-    #dplyr throws error 'attempt to use zero-length variable name' if there is a colname ''
-    plot_df = dplyr::mutate(plot_df, localization = ifelse(!!sym(logfc_column) >= labs_range[2], symbols_use[1], 
-                                          ifelse(!!sym(logfc_column) <= labs_range[1],
-                                                 symbols_use[1], symbols_use[2])))
+  #add a column that is used for different symbols (circle if inside plot, triangle if outside)
+  #dplyr throws error 'attempt to use zero-length variable name' if there is a colname ''
+    plot_df = dplyr::mutate(plot_df, localization = ifelse(!!sym(logfc_column) > labs_range[2] | !!sym(pval_column) > labs_range[4], symbols_use[1], 
+                                          ifelse(!!sym(logfc_column) < labs_range[1] | !!sym(pval_column) < labs_range[3],
+                                                   symbols_use[1], symbols_use[2])))
+      
     plot_df$localization = factor(plot_df$localization, levels = c('inside plotting area', 'outside plotting area'))
-    
+      
     #cap the values outside of plot
-    plot_df[, logfc_column] = ifelse(plot_df[, logfc_column] >= labs_range[2], labs_range[2],
-                                     ifelse(plot_df[, logfc_column] <= labs_range[1],
-                                            labs_range[1], plot_df[, logfc_column]))
-  }else{
-    plot_df$localization = ""
+    plot_df[, logfc_column] = ifelse(plot_df[, logfc_column] > labs_range[2], labs_range[2],
+                                       ifelse(plot_df[, logfc_column] < labs_range[1],
+                                              labs_range[1], plot_df[, logfc_column]))
+    plot_df[, pval_column] = ifelse(plot_df[, pval_column] > labs_range[4], labs_range[4],
+                                     ifelse(plot_df[, pval_column] < labs_range[3],
+                                            labs_range[3], plot_df[, pval_column]))
   }
+
   
   #give label for all genes > marker_thres
   mthres = as.character(marker_thres[1])
@@ -109,7 +124,6 @@ jj_plot_volcano = function(plot_df, logfc_column, pval_column, symbol_column=NUL
                          ifelse(plot_df[, logfc_column]<=-marker_thres[1] , big_val,
                                 middle_val))
   
-  plot_df[, pval_column] = -log10(plot_df[, pval_column])
   mthres2 = as.character(marker_thres[2])
   small_val2 = paste0(">= ", mthres2)
   big_val2 = paste0("<= -", mthres2)
@@ -193,7 +207,7 @@ jj_plot_volcano = function(plot_df, logfc_column, pval_column, symbol_column=NUL
     geom_hline(yintercept = 0) + geom_vline(xintercept = 0) + theme_minimal()
   
   if(!is.null(labs_range)){
-    g1 = g1 + coord_cartesian(xlim=labs_range, expand = F, clip = 'off')
+    g1 = g1 + coord_cartesian(xlim=labs_range[1:2], ylim = labs_range[3:4], expand = F, clip = 'off')
   }
   
   if(add_thres_line){
@@ -209,9 +223,7 @@ jj_plot_volcano = function(plot_df, logfc_column, pval_column, symbol_column=NUL
   }
   
   label_df = data.frame(name = c('logfc_gr0', 'logfc_sm0'),
-                        n = c(sum(plot_df[, logfc_column] > 0), sum(plot_df[, logfc_column] < 0)),
-                        x_pos = labs_range[c(2,1)],
-                        y_pos = c(1,1))
+                        n = c(sum(plot_df[, logfc_column] > 0), sum(plot_df[, logfc_column] < 0)))
   # if(add_numbers){
   #   g1 = g1 + geom_text(data = label_df[1, ],hjust = 1, vjust=0, mapping = aes(x = x_pos, y =  y_pos, label = n)) +
   #     geom_text(data = label_df[2, ],hjust = 0, vjust=0, mapping = aes(x = x_pos, y =  y_pos, label = n))
