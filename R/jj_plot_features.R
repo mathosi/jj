@@ -90,8 +90,8 @@ jj_plot_features <- function(obj,
                              label_subset = NULL,
                              fill_colors=NULL, 
                              use_no_legend = FALSE,
-                             xlabel = 'UMAP 1',
-                             ylabel = 'UMAP 2',
+                             xlabel = NULL,
+                             ylabel = NULL,
                              shape = 16, 
                              alpha = 1){
   library(ggplot2)
@@ -118,6 +118,10 @@ jj_plot_features <- function(obj,
   if(!all(apply(dr_df[, c(1,2)], 2, is.numeric))){
     stop('First two columns of the data.frame should contain numeric values used as x- and y-coordinates')
   } 
+  
+  if(is.null(xlabel)) xlabel = colnames(dr_df)[1]
+  if(is.null(ylabel)) ylabel = colnames(dr_df)[2]
+  
   colnames(dr_df)[1:2] <- c('dim_1', 'dim_2')
   na_coords = !complete.cases(dr_df[, 1:2])
   if(any(na_coords)){
@@ -161,7 +165,7 @@ jj_plot_features <- function(obj,
   # }
     
   if('Seurat' %in% obj_type){
-    ass_avail = Assays(obj)
+    ass_avail = Seurat::Assays(obj)
     assay_order = c(assay_order, ass_avail)
     for(i in seq_along(assay_order)){
       if(assay_order[i] == 'meta.data|cellColData'){
