@@ -34,8 +34,8 @@ jj_plot_features(
   label_subset = NULL,
   fill_colors = NULL,
   use_no_legend = FALSE,
-  xlabel = "UMAP 1",
-  ylabel = "UMAP 2",
+  xlabel = NULL,
+  ylabel = NULL,
   shape = 16,
   alpha = 1
 )
