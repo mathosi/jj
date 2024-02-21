@@ -83,9 +83,9 @@ jj_plot_features(
 
 \item{use_no_legend}{omit legend, default: FALSE}
 
-\item{xlabel}{x axis label, default: UMAP 1}
+\item{xlabel}{x axis label}
 
-\item{ylabel}{y axis label, default: UMAP 2}
+\item{ylabel}{y axis label}
 
 \item{shape}{point shape, default: 16}
 
@@ -132,5 +132,6 @@ jj_plot_features(obj= pbmc_small, reduction ='tsne', features=c('MS4A1', 'CD79A'
 jj_arrange_ggplots(jj_plot_features(obj= pbmc_small, reduction ='tsne', features=c('MS4A1', 'CD79A', 'CD8A'), cap_top='auto', return_gg_object = TRUE))
 jj_plot_features(pbmc_small, reduction ='tsne', features= 'nCount_RNA', cap_top='q95', foreground_subset_bool = pbmc_small$groups == 'g1', show_background_cells = T)
 jj_plot_features(pbmc_small, features= 'nCount_RNA', cap_top='q95', area_by = 'letter.idents', area_thres = 0.9)
+jj_plot_features(pbmc_small, features= 'CD8A', cap_top='q95', area_by = 'letter.idents', area_thres = 0.9, facet_by = 'groups')
 }
 \keyword{plot}
