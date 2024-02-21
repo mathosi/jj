@@ -37,8 +37,8 @@
 #' @param do_shuffle bool with default = TRUE, randomly shuffle the plotting order. Supersedes do_order.
 #' @param label_type one of geom_text, geom_text_repel, geom_label, geom_label_repel
 #' @param fill_colors colour to fill boxes or areas, if label_type or area_by is not NULL. If NULL, use colours from the custom_colors argument or grey if this is NULL as well
-#' @param xlabel x axis label, default: UMAP 1
-#' @param ylabel y axis label, default: UMAP 2
+#' @param xlabel x axis label
+#' @param ylabel y axis label
 #' @keywords plot
 #' @export
 #' @examples
@@ -61,6 +61,7 @@
 #' jj_arrange_ggplots(jj_plot_features(obj= pbmc_small, reduction ='tsne', features=c('MS4A1', 'CD79A', 'CD8A'), cap_top='auto', return_gg_object = TRUE))
 #' jj_plot_features(pbmc_small, reduction ='tsne', features= 'nCount_RNA', cap_top='q95', foreground_subset_bool = pbmc_small$groups == 'g1', show_background_cells = T)
 #' jj_plot_features(pbmc_small, features= 'nCount_RNA', cap_top='q95', area_by = 'letter.idents', area_thres = 0.9)
+#' jj_plot_features(pbmc_small, features= 'CD8A', cap_top='q95', area_by = 'letter.idents', area_thres = 0.9, facet_by = 'groups')
 
 jj_plot_features <- function(obj,
                              features = NULL,
@@ -185,7 +186,7 @@ jj_plot_features <- function(obj,
       ass_m = GetAssayData(obj, assay = assay_use, slot = slot)
       if(any(features %in% rownames(ass_m))){
         message(sprintf('Getting features from %s slot of the %s assay in the Seurat object', slot, assay_use))
-        dr_df <- jj_bind_features_with_dr_df(ass_m, features=features[features %in% rownames(ass_m)], dr_df=dr_df[, 1:2], log10Transform=FALSE)
+        dr_df <- jj_bind_features_with_dr_df(ass_m, features=features[features %in% rownames(ass_m)], dr_df=dr_df[, c(colnames(dr_df)[1:2], facet_by, area_by)], log10Transform=FALSE)
         break
       }
     }
@@ -215,7 +216,7 @@ jj_plot_features <- function(obj,
       if(any(features %in% favail)){
         message(sprintf('Getting features from %s assay in the ArchR object', assay_use))
         ass_m = get_archr_mat(obj, mat = assay_use, assay_use = 1)
-        dr_df <- jj_bind_features_with_dr_df(ass_m, features=features[features %in% rownames(ass_m)], dr_df=dr_df[, 1:2], log10Transform=FALSE)
+        dr_df <- jj_bind_features_with_dr_df(ass_m, features=features[features %in% rownames(ass_m)], dr_df=dr_df[, c(colnames(dr_df)[1:2], facet_by, area_by)], log10Transform=FALSE)
         break
       }
     }

@@ -84,5 +84,3 @@ jj_plot_blended_feature = function(df, x, y, colfeat1, colfeat2, pt_size = 1){
   
   gg_grid
 }
-
-
